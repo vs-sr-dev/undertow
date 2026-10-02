@@ -137,7 +137,12 @@ static int gl_loadtexture(lua_State *L)
         fprintf(stderr, "gl.LoadTexture: cannot load %s\n", path);
         return ret_int(L, -1);   /* TODO: engine failure value */
     }
-    return ret_int(L, osd_texture_add(rgba, w, h));
+    {
+        int id = osd_texture_add(rgba, w, h);
+        if (rt_trace)
+            printf("[%7u] gl.LoadTexture(%s) -> %d\n", (unsigned)rt_now_ms(), path, id);
+        return ret_int(L, id);
+    }
 }
 
 static int gl_freetexture(lua_State *L)
@@ -157,7 +162,11 @@ static int gl_createemptytexture(lua_State *L)
 
 static int gl_createoverlay(lua_State *L)
 {
-    return ret_int(L, osd_overlay_create(luaL_checkint(L, 1)));
+    int id = osd_overlay_create(luaL_checkint(L, 1));
+    if (rt_trace)
+        printf("[%7u] gl.CreateOverlayFromTexture(%d) -> %d\n", (unsigned)rt_now_ms(),
+               luaL_checkint(L, 1), id);
+    return ret_int(L, id);
 }
 
 static int gl_freeoverlay(lua_State *L)
@@ -168,6 +177,7 @@ static int gl_freeoverlay(lua_State *L)
 
 static int gl_addtexture(lua_State *L)
 {
+    rt_trace_call(L, "gl.AddTextureToOverlay");
     osd_overlay_add_frame(luaL_checkint(L, 1), luaL_checkint(L, 2));
     return 0;
 }
@@ -316,11 +326,12 @@ static int gl_createtextureanimation(lua_State *L)
     return ret_int(L, 0);
 }
 
-/* BlitOverlay(src_ovl, dst_ovl, x, y [, ?, replace]) - TODO: meaning of arg 5 */
+/* BlitOverlay(src_ovl, dst_ovl, x, y [, ?, blend]): copies pixels by default (Gemz clears
+ * board cells by blitting an empty overlay); arg 6 = 1 blends (hypothesis). TODO: arg 5 */
 static int gl_blitoverlay(lua_State *L)
 {
     osd_blit(luaL_checkint(L, 1), luaL_checkint(L, 2), luaL_checkint(L, 3), luaL_checkint(L, 4),
-             luaL_optint(L, 6, 0));
+             luaL_optint(L, 6, 0) == 0);
     return 0;
 }
 

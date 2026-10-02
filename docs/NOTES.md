@@ -117,7 +117,9 @@ matching `.dat` holds metrics (format TBD).
   `AddVisibilityAnimation(ovl, at, visible)`, `CreateTextureAnimation(ovl, start,
   {{cmd, arg, ms}...})` with cmd 1 TA_DISPLAY_TEXTURE frame, 2 TA_END_ANIMATION,
   3 TA_JUMP step (names from script locals); `HasAnimations` is busy-waited on.
-- `BlitOverlay(src_ovl, dst_ovl, x, y [, ?, ?])` draws src into dst's texture.
+- `BlitOverlay(src_ovl, dst_ovl, x, y [, ?, blend])` draws src into dst's texture and
+  **copies pixels by default** (Gemz clears board cells by blitting an empty overlay;
+  blending left stale gems under new ones, confirmed by playtest). Arg 6 = 1 assumed blend.
 - Text: `text.Render(str, font, w, h, halign, valign, char_spacing, line_spacing, ?, tint,
   Y, Cb, Cr, ?)` (meanings after w,h inferred; colours YCbCr), `RenderSimple(font, str)`;
   `GetOverlayId(tid)` -> hidden overlay the script positions.
