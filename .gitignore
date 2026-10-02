@@ -1,0 +1,16 @@
+# Disc images, firmware and anything extracted from them (copyrighted, never commit)
+*.iso
+*.zip
+*.7z
+discs/
+extracted/
+
+# Build output
+build/
+
+# Vendored source archives
+third_party/*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
