@@ -1,34 +1,79 @@
 # Undertow
 
-A ZAPiT **Game Wave** emulator (work in progress).
+An emulator for the **ZAPiT Game Wave Family Entertainment System** (2005-2009), the
+Canadian DVD-based game console.
 
-Game Wave games are Lua 5.0.2 bytecode (`.zbc`) run by the "ZIT" engine shipped on each
-disc. Undertow takes the high-level route: it runs the bytecode on a patched Lua 5.0.2 and
-reimplements the engine libraries (`gl`, `movie`, `audio`, `input`, ...) on the PC.
+Game Wave games are Lua 5.0.2 bytecode (`.zbc`) run by the "ZIT" engine that ships on each
+disc, with MPEG-2 movies on the video plane and a 16-bit OSD on top. Undertow takes the
+high-level route: it runs the original bytecode on a lightly patched Lua 5.0.2 and
+reimplements the engine's libraries (`gl`, `text`, `movie`, `audio`, `input`, ...) on the
+PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 
-## Build (MSYS2 mingw64)
+## Status
+
+| Game | Status |
+|-|-|
+| Sudoku | Playable (menus, a full board with timer and number entry) |
+| Gemz | Playable (menus, Classic mode board, animations) |
+
+Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
+alpha and animations, text with the disc fonts, sound effects, remote control input,
+disc file access, reading discs directly from `.iso` images.
+
+Not yet: save games (EEPROM), parabola/blinking animations, deinterlacing, engine
+built-in screens (`iframe.ShowPredefined`), multiple remotes. Other titles of the
+16-disc library are untested.
+
+## Legal
+
+This repository contains **no** Game Wave firmware, game code or assets. You need your
+own disc images. Undertow is an independent project, not affiliated with ZAPiT Games.
+
+## Build (Windows, MSYS2 mingw64)
+
+Packages: `mingw-w64-x86_64-gcc`, `-cmake`, `-ninja`, `-SDL2`, `-ffmpeg`, `-zlib`.
 
     export PATH=/c/msys64/mingw64/bin:$PATH
     cmake -S . -B build -G Ninja
     cmake --build build
+    sh tools/bundle_dlls.sh          # copy the needed DLLs next to build/undertow.exe
+
+The code is portable C99 + SDL2 + FFmpeg; other platforms should only need build tweaks.
 
 ## Run
 
-    sh tools/bundle_dlls.sh                     # once per build: copy DLLs next to the exe
-    build/undertow "Sudoku (USA).iso"            # or drag the .iso onto undertow.exe
+    build/undertow "Sudoku (USA).iso"     # or drag an .iso onto undertow.exe
 
-Keys: arrows, Enter/Space = SELECT, Z/X/C/V = A/B/C/D, 0-9, Backspace = DVD MENU,
-Tab = GAME MENU, Esc = quit. Testing options: `--trace`, `--keys 14,14 --key-start 4000
---key-interval 1500`, `--exit-after MS --screenshot shot.bmp`.
+An extracted disc directory works too.
 
-Working: MPEG-2 movies with sound, iframes, OSD textures/overlays and animations, text
-with the disc fonts, sound effects, remote input, disc files. Sudoku and Gemz reach and
-play their game boards. Missing: saves (eeprom), parabola/blinking animations,
-deinterlacing, built-in engine stills (iframe.ShowPredefined).
+| Remote | Keyboard |
+|-|-|
+| Arrows | Arrow keys |
+| SELECT | Enter / Space |
+| A B C D | Z X C V |
+| 0-9 | 0-9 (top row or keypad) |
+| DVD MENU / GAME MENU | Backspace / Tab |
+| (quit) | Esc |
 
-## Layout
+Debugging/testing options: `--trace` (log every engine API call; prints the Lua stack
+when stopped), `--keys 14,14 --key-start 4000 --key-interval 1500` (scripted input),
+`--exit-after MS --screenshot shot.bmp`.
+
+## Repository layout
 
 - `src/` - emulator sources
 - `third_party/lua-5.0.2/` - Lua with local patches (`UNDERTOW_PATCHES.md`)
-- `tools/` - Python research tools (extractors, disassemblers, format decoders)
-- `docs/` - research notes (`NOTES.md`, `HARDWARE.md`, `engine_api_tables.txt`)
+- `tools/` - Python research tools: `.lzh`/cheese container extractors, ZBM image
+  decoder, annotated MIPS disassembler, xref/MMIO mappers, ZBC bytecode disassembler and
+  API usage scanner, engine Lua library table finder
+- `docs/` - research notes: `NOTES.md` (formats, engine API semantics), `HARDWARE.md`
+  (CPU, memory map, boot flow), `engine_api_tables.txt` (engine Lua library entry points)
+
+## Credits
+
+Built on the format research of the [GameWaveFans](https://github.com/gamewavefans/GameWaveFans)
+project. See `THIRD_PARTY_NOTICES.md` for licenses.
+
+## License
+
+MIT - see `LICENSE`.
