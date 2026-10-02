@@ -28,7 +28,8 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET libavformat libavcodec libswre
 
 add_executable(undertow
   src/main.c src/runtime.c src/vfs.c src/diz.c src/zbc.c src/zbm.c src/osd.c src/video.c
-  src/input.c src/audio.c src/movie.c src/zlibs.c src/lib_gl.c src/lib_sys.c src/lib_media.c)
+  src/input.c src/audio.c src/movie.c src/zlibs.c src/lib_gl.c src/lib_sys.c src/lib_media.c
+  src/font.c src/lib_text.c src/lib_data.c)
 target_include_directories(undertow PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_directories(undertow PRIVATE ${SDL2_LIBRARY_DIRS})
 # SDL_MAIN_HANDLED: plain console main(), no SDL2main / -mwindows

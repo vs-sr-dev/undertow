@@ -104,6 +104,29 @@ matching `.dat` holds metrics (format TBD).
 - `gl.SetParameters(ovl, x, y, z, visible)` (core 0x80615228: overlay+0x34 pos,
   +0x44 z, +0x48 visible; `SetVisibility` writes the same +0x48), marks dirty rects.
 - Menus = MPEG movies (intro + looping) on the video plane, OSD overlays on top.
+- `movie.Load(path)` -> **0 on success** (Gemz checks it); Load also **resets looping**
+  (Gemz plays transitions without `SetLoop(0)`). Movies: MPEG-PS, MPEG-2 720x480 29.97
+  interlaced 4:3, MP2 44.1 kHz stereo.
+- `.zwf` sound effects are **mono** s16 BE at 44.1 kHz (header +4 = sample count, often odd;
+  zlib data at +0x14). The wiki's "stereo 22050" plays identically by accident.
+- `zmath.Rand(min, max)` -> [min, max) (engine: min + rand() % (max - min)).
+- `pointer`: byte offsets; `ToStringRange(buf, a, b)` -> bytes [a, b).
+- `zfile.ReadBytes(file, offset, count)` -> buffer; ReadLine -> (0, line) | (1, nil).
+- Animations (times on the time.GetRealTime clock): `AddPositionAnimation(ovl, fx, fy,
+  tx, ty, start, dur)`, `AddAlphaAnimation(ovl, start, 1=in|2=out, dur)`,
+  `AddVisibilityAnimation(ovl, at, visible)`, `CreateTextureAnimation(ovl, start,
+  {{cmd, arg, ms}...})` with cmd 1 TA_DISPLAY_TEXTURE frame, 2 TA_END_ANIMATION,
+  3 TA_JUMP step (names from script locals); `HasAnimations` is busy-waited on.
+- `BlitOverlay(src_ovl, dst_ovl, x, y [, ?, ?])` draws src into dst's texture.
+- Text: `text.Render(str, font, w, h, halign, valign, char_spacing, line_spacing, ?, tint,
+  Y, Cb, Cr, ?)` (meanings after w,h inferred; colours YCbCr), `RenderSimple(font, str)`;
+  `GetOverlayId(tid)` -> hidden overlay the script positions.
+
+### Font `.dat` (verified on all fonts of both discs)
+5 x char[128] (face, family, charset, style, atlas .zbm name), then at 0x280:
+int count(96), first(32), end(128), cell size, kerning count; 0x294: count x 8 ints
+{x0, y0, x1, y1, advance, left bearing, ink width, right bearing}; then kerning count x
+{first, second, adjust}. Glyphs = `advance` columns from the start of their atlas cell.
 
 ## Hardware / boot
 See `HARDWARE.md` (CPU core, memory map, SoC register blocks, boot flow).

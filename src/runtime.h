@@ -14,6 +14,7 @@
 extern SDL_mutex *rt_lock;     /* guards OSD, video plane, input queue */
 extern volatile int rt_quit;   /* set by the main thread to stop the game thread */
 extern int rt_trace;           /* --trace: log engine API calls */
+extern char rt_engine_path[256]; /* engine binary on the disc (gamewave.diz) */
 
 void rt_init(void);
 uint32_t rt_now_ms(void);      /* engine clock (ms since start) */

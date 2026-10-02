@@ -7,6 +7,7 @@
 SDL_mutex *rt_lock;
 volatile int rt_quit;
 int rt_trace;
+char rt_engine_path[256];
 
 static uint32_t g_start;
 static int g_next_id = 1;

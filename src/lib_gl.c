@@ -252,7 +252,76 @@ static int gl_settexturealphalevel(lua_State *L)
 
 static int gl_hasanimations(lua_State *L)
 {
-    return ret_int(L, 0);   /* TODO: animations */
+    rt_check_quit(L);
+    SDL_Delay(0);    /* scripts busy-wait on this */
+    return ret_int(L, osd_anim_count(luaL_checkint(L, 1)));
+}
+
+static int gl_deleteallanimations(lua_State *L)
+{
+    osd_anim_clear(luaL_checkint(L, 1));
+    return 0;
+}
+
+/* AddPositionAnimation(ovl, from_x, from_y, to_x, to_y, start_ms, duration_ms) */
+static int gl_addpositionanimation(lua_State *L)
+{
+    rt_trace_call(L, "gl.AddPositionAnimation");
+    osd_anim_position(luaL_checkint(L, 1), luaL_checkint(L, 2), luaL_checkint(L, 3),
+                      luaL_checkint(L, 4), luaL_checkint(L, 5), (uint32_t)luaL_checkint(L, 6),
+                      (uint32_t)luaL_checkint(L, 7));
+    return 0;
+}
+
+/* AddAlphaAnimation(ovl, start_ms, mode 1=in 2=out, duration_ms) */
+static int gl_addalphaanimation(lua_State *L)
+{
+    rt_trace_call(L, "gl.AddAlphaAnimation");
+    osd_anim_alpha(luaL_checkint(L, 1), (uint32_t)luaL_checkint(L, 2), luaL_checkint(L, 3),
+                   (uint32_t)luaL_checkint(L, 4));
+    return 0;
+}
+
+/* AddVisibilityAnimation(ovl, at_ms, visible) */
+static int gl_addvisibilityanimation(lua_State *L)
+{
+    rt_trace_call(L, "gl.AddVisibilityAnimation");
+    osd_anim_visibility(luaL_checkint(L, 1), (uint32_t)luaL_checkint(L, 2), luaL_checkint(L, 3));
+    return 0;
+}
+
+/* CreateTextureAnimation(ovl, start_ms, {{cmd, arg, duration}, ...});
+ * cmd 1 TA_DISPLAY_TEXTURE (frame, ms), 2 TA_END_ANIMATION, 3 TA_JUMP (step index) */
+static int gl_createtextureanimation(lua_State *L)
+{
+    int steps[64 * 3], n = 0, i;
+    rt_trace_call(L, "gl.CreateTextureAnimation");
+    luaL_checktype(L, 3, LUA_TTABLE);
+    for (i = 1; n < 64; i++) {
+        int k;
+        lua_rawgeti(L, 3, i);
+        if (!lua_istable(L, -1)) {
+            lua_pop(L, 1);
+            break;
+        }
+        for (k = 0; k < 3; k++) {
+            lua_rawgeti(L, -1, k + 1);
+            steps[n * 3 + k] = (int)lua_tonumber(L, -1);
+            lua_pop(L, 1);
+        }
+        lua_pop(L, 1);
+        n++;
+    }
+    osd_anim_texture(luaL_checkint(L, 1), (uint32_t)luaL_optint(L, 2, 0), steps, n);
+    return ret_int(L, 0);
+}
+
+/* BlitOverlay(src_ovl, dst_ovl, x, y [, ?, replace]) - TODO: meaning of arg 5 */
+static int gl_blitoverlay(lua_State *L)
+{
+    osd_blit(luaL_checkint(L, 1), luaL_checkint(L, 2), luaL_checkint(L, 3), luaL_checkint(L, 4),
+             luaL_optint(L, 6, 0));
+    return 0;
 }
 
 /* Not understood yet: traced so they can be studied. */
@@ -279,13 +348,17 @@ static const luaL_reg gl_lib[] = {
     {"GetZorder", gl_getzorder}, {"GetVisibility", gl_getvisibility},
     {"GetPosition", gl_getposition}, {"GetSize", gl_getsize},
     {"HasAnimations", gl_hasanimations}, {"CreateEmptyTexture", gl_createemptytexture},
+    {"DeleteAllAnimations", gl_deleteallanimations},
+    {"AddPositionAnimation", gl_addpositionanimation},
+    {"AddAlphaAnimation", gl_addalphaanimation},
+    {"AddVisibilityAnimation", gl_addvisibilityanimation},
+    {"CreateTextureAnimation", gl_createtextureanimation}, {"BlitOverlay", gl_blitoverlay},
     {"SetTextureAlphaLevel", gl_settexturealphalevel}, {NULL, NULL}};
 
 static const char *const gl_unknown_nop[] = {
-    "SetClipInfo", "ClearOSD", "Show", "DeleteAllAnimations", "AddPositionAnimation",
-    "AddVisibilityAnimation", "AddParabolaAnimation", "AddBlinkingAnimation",
-    "AddAlphaAnimation", "BlitOverlay", "BlitOverlayWithCR", NULL};
-static const char *const gl_unknown_id[] = {"CreateTextureAnimation", NULL};
+    "SetClipInfo", "ClearOSD", "Show", "AddParabolaAnimation", "AddBlinkingAnimation",
+    "BlitOverlayWithCR", NULL};
+static const char *const gl_unknown_id[] = {NULL};
 
 static void add_traced(lua_State *L, const char *lib, const char *const *names,
                        lua_CFunction fn)

@@ -6,12 +6,27 @@
 #include "runtime.h"
 
 #define MAX_FRAMES 64
+#define MAX_ANIMS 8
+#define MAX_STEPS 64
+
+enum { ANIM_POS, ANIM_ALPHA, ANIM_VIS };
+
+typedef struct {
+    int type;
+    uint32_t start, dur;
+    int a, b, c, d;
+} Anim;
+
+typedef struct {
+    int cmd, arg, dur;
+} TexStep;
 
 typedef struct {
     int id;
     int w, h;
     uint8_t *rgba;
     SDL_Texture *sdl;     /* created lazily by the main thread */
+    int dirty;            /* pixels changed (blits): re-upload */
     int dead;             /* freed by the game, released by the main thread */
 } Texture;
 
@@ -21,6 +36,11 @@ typedef struct {
     int nframes, active;
     int x, y, z, visible, alpha;
     int seq;              /* creation order, tie-break for equal z */
+    Anim anims[MAX_ANIMS];
+    int nanims;
+    TexStep prog[MAX_STEPS]; /* texture animation program */
+    int nprog, pc, prog_on;
+    uint32_t prog_t;      /* when the current step starts */
 } Overlay;
 
 typedef struct {
@@ -243,6 +263,170 @@ void osd_end_scene(void)
     SDL_UnlockMutex(rt_lock);
 }
 
+/* ---------------- animations (times are engine ms, as from time.GetRealTime) ------- */
+
+static void anim_update_ovl(Overlay *o, uint32_t now)
+{
+    int i, guard = 0;
+    for (i = 0; i < o->nanims;) {
+        Anim *a = &o->anims[i];
+        int t1000;
+        if ((int32_t)(now - a->start) < 0) {
+            i++;
+            continue;
+        }
+        t1000 = a->dur ? (int)((uint64_t)(now - a->start) * 1000 / a->dur) : 1000;
+        if (t1000 > 1000)
+            t1000 = 1000;
+        switch (a->type) {
+        case ANIM_POS:
+            o->x = a->a + (a->c - a->a) * t1000 / 1000;
+            o->y = a->b + (a->d - a->b) * t1000 / 1000;
+            break;
+        case ANIM_ALPHA:   /* mode 1 fade in, 2 fade out */
+            o->alpha = a->a == 2 ? 255 - 255 * t1000 / 1000 : 255 * t1000 / 1000;
+            break;
+        case ANIM_VIS:
+            o->visible = a->a;
+            break;
+        }
+        if (t1000 >= 1000)
+            o->anims[i] = o->anims[--o->nanims];
+        else
+            i++;
+    }
+    while (o->prog_on && (int32_t)(now - o->prog_t) >= 0 && guard++ < MAX_STEPS) {
+        TexStep *st = &o->prog[o->pc];
+        if (st->cmd == 1) {            /* TA_DISPLAY_TEXTURE frame, duration */
+            if (st->arg >= 0 && st->arg < o->nframes)
+                o->active = st->arg;
+            o->prog_t += st->dur > 0 ? (uint32_t)st->dur : 1;
+            o->pc++;
+        } else if (st->cmd == 3) {     /* TA_JUMP index */
+            o->pc = st->arg;
+        } else {                       /* TA_END_ANIMATION */
+            o->prog_on = 0;
+        }
+        if (o->pc < 0 || o->pc >= o->nprog)
+            o->prog_on = 0;
+    }
+}
+
+static void anim_update(void)
+{
+    uint32_t now = rt_now_ms();
+    int i;
+    for (i = 0; i < g_novl; i++)
+        if (g_ovl[i].nanims || g_ovl[i].prog_on)
+            anim_update_ovl(&g_ovl[i], now);
+}
+
+static int add_anim(int ovl, Anim a)
+{
+    WITH_OVL(ovl, {
+        if (o->nanims < MAX_ANIMS)
+            o->anims[o->nanims++] = a;
+    });
+}
+
+int osd_anim_position(int ovl, int fx, int fy, int tx, int ty, uint32_t start, uint32_t dur)
+{
+    Anim a = {ANIM_POS, start, dur, fx, fy, tx, ty};
+    return add_anim(ovl, a);
+}
+
+int osd_anim_alpha(int ovl, uint32_t start, int mode, uint32_t dur)
+{
+    Anim a = {ANIM_ALPHA, start, dur, mode, 0, 0, 0};
+    return add_anim(ovl, a);
+}
+
+int osd_anim_visibility(int ovl, uint32_t start, int visible)
+{
+    Anim a = {ANIM_VIS, start, 0, visible, 0, 0, 0};
+    return add_anim(ovl, a);
+}
+
+int osd_anim_texture(int ovl, uint32_t start, const int *steps, int nsteps)
+{
+    uint32_t now = rt_now_ms();
+    WITH_OVL(ovl, {
+        int i;
+        if (nsteps > MAX_STEPS)
+            nsteps = MAX_STEPS;
+        for (i = 0; i < nsteps; i++)
+            o->prog[i] = (TexStep){steps[i * 3], steps[i * 3 + 1], steps[i * 3 + 2]};
+        o->nprog = nsteps;
+        o->pc = 0;
+        o->prog_t = (int32_t)(start - now) > 0 ? start : now;
+        o->prog_on = nsteps > 0;
+    });
+}
+
+int osd_anim_count(int ovl)
+{
+    int n = 0;
+    SDL_LockMutex(rt_lock);
+    anim_update();
+    {
+        Overlay *o = find_ovl(ovl);
+        if (o)
+            n = o->nanims + (o->prog_on ? 1 : 0);
+    }
+    SDL_UnlockMutex(rt_lock);
+    return n;
+}
+
+int osd_anim_clear(int ovl)
+{
+    WITH_OVL(ovl, {
+        o->nanims = 0;
+        o->prog_on = 0;
+    });
+}
+
+/* Draw src overlay's current texture into dst overlay's current texture at (x,y). */
+int osd_blit(int src_ovl, int dst_ovl, int x, int y, int replace)
+{
+    Overlay *so, *dov;
+    Texture *st, *dt;
+    int ok = 0, row, col;
+    SDL_LockMutex(rt_lock);
+    so = find_ovl(src_ovl);
+    dov = find_ovl(dst_ovl);
+    st = so && so->nframes ? find_tex(so->frames[so->active]) : NULL;
+    dt = dov && dov->nframes ? find_tex(dov->frames[dov->active]) : NULL;
+    if (st && dt) {
+        for (row = 0; row < st->h; row++) {
+            int dy = y + row;
+            if (dy < 0 || dy >= dt->h)
+                continue;
+            for (col = 0; col < st->w; col++) {
+                int dx = x + col;
+                const uint8_t *sp = st->rgba + ((size_t)row * st->w + col) * 4;
+                uint8_t *dp;
+                int a;
+                if (dx < 0 || dx >= dt->w)
+                    continue;
+                dp = dt->rgba + ((size_t)dy * dt->w + dx) * 4;
+                a = sp[3];
+                if (replace || dp[3] == 0) {
+                    memcpy(dp, sp, 4);
+                } else if (a) {   /* source over destination */
+                    int da = dp[3] * (255 - a) / 255, oa = a + da, k;
+                    for (k = 0; k < 3; k++)
+                        dp[k] = (uint8_t)((sp[k] * a + dp[k] * da) / (oa ? oa : 1));
+                    dp[3] = (uint8_t)oa;
+                }
+            }
+        }
+        dt->dirty = 1;
+        ok = 1;
+    }
+    SDL_UnlockMutex(rt_lock);
+    return ok;
+}
+
 /* ---------------- video plane ---------------- */
 
 void osd_video_set(const uint8_t *y, int ystride, const uint8_t *u, const uint8_t *v,
@@ -347,6 +531,7 @@ void osd_render(SDL_Renderer *r)
 {
     int i;
     SDL_LockMutex(rt_lock);
+    anim_update();
     if (g_scene_depth == 0)
         snapshot();
     SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
@@ -362,7 +547,10 @@ void osd_render(SDL_Renderer *r)
                                        t->w, t->h);
             SDL_UpdateTexture(t->sdl, NULL, t->rgba, t->w * 4);
             SDL_SetTextureBlendMode(t->sdl, SDL_BLENDMODE_BLEND);
+        } else if (t->dirty) {
+            SDL_UpdateTexture(t->sdl, NULL, t->rgba, t->w * 4);
         }
+        t->dirty = 0;
         SDL_SetTextureAlphaMod(t->sdl, (Uint8)g_draw[i].alpha);
         dst.x = g_draw[i].x;
         dst.y = g_draw[i].y;

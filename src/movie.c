@@ -189,6 +189,7 @@ int movie_load(const char *disc_path)
     }
     vfs_close(f);
     snprintf(g_loaded, sizeof(g_loaded), "%s", disc_path);
+    g_loop = 0;   /* Load resets looping: Gemz plays transitions without SetLoop(0) */
     return 0;
 }
 

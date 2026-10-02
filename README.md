@@ -20,8 +20,10 @@ Keys: arrows, Enter/Space = SELECT, Z/X/C/V = A/B/C/D, 0-9, Backspace = DVD MENU
 Tab = GAME MENU, Esc = quit. Testing options: `--trace`, `--keys 14,14 --key-start 4000
 --key-interval 1500`, `--exit-after MS --screenshot shot.bmp`.
 
-Working: MPEG-2 movies with sound, iframes, OSD textures/overlays, sound effects, remote
-input. Missing: text/fonts, OSD animations, saves (eeprom), pointer library.
+Working: MPEG-2 movies with sound, iframes, OSD textures/overlays and animations, text
+with the disc fonts, sound effects, remote input, disc files. Sudoku and Gemz reach and
+play their game boards. Missing: saves (eeprom), parabola/blinking animations,
+deinterlacing, built-in engine stills (iframe.ShowPredefined).
 
 ## Layout
 

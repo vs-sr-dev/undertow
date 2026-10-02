@@ -28,6 +28,18 @@ int osd_overlay_get(int ovl, int *x, int *y, int *z, int *visible, int *w, int *
 int osd_overlay_count(void);
 int osd_texture_count(void);
 
+/* animations: times are engine ms (time.GetRealTime clock) */
+int osd_anim_position(int ovl, int fx, int fy, int tx, int ty, uint32_t start, uint32_t dur);
+int osd_anim_alpha(int ovl, uint32_t start, int mode, uint32_t dur);   /* 1 in, 2 out */
+int osd_anim_visibility(int ovl, uint32_t start, int visible);
+/* steps: nsteps x {cmd, arg, duration}; cmd 1 show frame arg, 2 end, 3 jump to step arg */
+int osd_anim_texture(int ovl, uint32_t start, const int *steps, int nsteps);
+int osd_anim_count(int ovl);
+int osd_anim_clear(int ovl);
+
+/* draw one overlay's current texture into another's (replace: copy pixels, no blending) */
+int osd_blit(int src_ovl, int dst_ovl, int x, int y, int replace);
+
 /* scenes: while a scene is open the compositor keeps showing the last complete state */
 void osd_begin_scene(void);
 void osd_end_scene(void);

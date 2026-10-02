@@ -129,8 +129,9 @@ static int game_thread(void *unused)
         fprintf(stderr, "load error: %s\n", lua_tostring(L, -1));
     } else {
         rc = lua_pcall(L, 0, 0, 1);
-        if (rc != 0 && !rt_quit)
-            fprintf(stderr, "script error: %s\n", lua_tostring(L, -1));
+        if (rc != 0 && (!rt_quit || rt_trace))   /* on quit, --trace shows where it was */
+            fprintf(stderr, "script %s: %s\n", rt_quit ? "stopped" : "error",
+                    lua_tostring(L, -1));
         else if (rc == 0)
             printf("script finished\n");
     }
@@ -212,6 +213,7 @@ int main(int argc, char **argv)
         return 1;
     }
     free(buf);
+    snprintf(rt_engine_path, sizeof(rt_engine_path), "%s", g_diz.engine);
     printf("Game: %s (version %s), engine %s board %d (%s)\n", g_diz.appname, g_diz.version,
            g_diz.engine, g_diz.board, g_diz.engine_version);
 

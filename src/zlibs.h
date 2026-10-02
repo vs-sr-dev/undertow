@@ -10,5 +10,7 @@ void zlibs_open(lua_State *L);
 void libgl_open(lua_State *L);    /* gl, rm, iframe */
 void libsys_open(lua_State *L);   /* input, time */
 void libmedia_open(lua_State *L); /* movie, audio */
+void libtext_open(lua_State *L);  /* font, text */
+void libdata_open(lua_State *L);  /* pointer, zfile */
 
 #endif

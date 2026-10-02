@@ -59,11 +59,6 @@ static void open_stubs(lua_State *L, const char *lib, const StubFn *fns)
     lua_settable(L, LUA_GLOBALSINDEX);
 }
 
-static const StubFn pointer_fns[] = {
-    {"CreateUserData", R_ID}, {"DestroyUserData", R_NONE}, {"ToString", R_ZERO},
-    {"ToStringRange", R_ZERO}, {"FromString", R_ID}, {"GetIndex", R_ZERO},
-    {"GetU32MSB", R_ZERO}, {"SetU32MSB", R_NONE}, {"GetU32LSB", R_ZERO}, {"SetU32LSB", R_NONE},
-    {"ByteToAscii", R_ZERO}, {"AsciiToByte", R_ZERO}, {NULL, 0}};
 static const StubFn engine_fns[] = {
     {"ZMM_SetLeakDebugMode", R_NONE}, {"ZMM_SetCheckPoint", R_NONE},
     {"ZMM_VerifyCheckPoint", R_NONE}, {"ZMM_GetTotalAllocMemory", R_MEM},
@@ -73,11 +68,6 @@ static const StubFn engine_fns[] = {
     {"EjectTray", R_NONE}, {"GetTrayState", R_ZERO}, {"SoftwareReset", R_NONE},
     {"WaitForDisk", R_NONE}, {"GetNumOverlays", R_ZERO}, {"GetNumTextures", R_ZERO},
     {"Version", R_VERSION}, {"SetLineTraceMode", R_NONE}, {"GetLineTraceMode", R_ZERO},
-    {NULL, 0}};
-static const StubFn font_fns[] = {
-    {"Load", R_ID}, {"Free", R_NONE}, {"GetBuiltinFontID", R_ID}, {NULL, 0}};
-static const StubFn text_fns[] = {
-    {"RenderSimple", R_ID}, {"Render", R_ID}, {"Remove", R_NONE}, {"GetOverlayId", R_ID},
     {NULL, 0}};
 static const StubFn spi_fns[] = {
     {"Init", R_ZERO}, {"Open", R_ZERO}, {"Close", R_ZERO}, {"Write", R_ZERO}, {"Read", R_ZERO},
@@ -91,9 +81,6 @@ static const StubFn eeprom_fns[] = {
     {"UnloadData", R_NONE}, {"SaveGameToExistingSlot", R_ONE},
     {"EnumerateGameSavesByID", R_POS}, {"EnumerateGameSavesByName", R_POS},
     {"Format", R_NONE}, {"CorruptFlash", R_NONE}, {"CheckFlashIntegrity", R_ONE}, {NULL, 0}};
-static const StubFn zfile_fns[] = {
-    {"OpenFile", R_ID}, {"ReadBytes", R_NILZERO}, {"ReadLine", R_NILZERO},
-    {"SetHeadPosition", R_ZERO}, {"GetFileSize", R_ZERO}, {"CloseFile", R_ZERO}, {NULL, 0}};
 static const StubFn dict_fns[] = {
     {"Load", R_ID}, {"Unload", R_NONE}, {"Lookup", R_ZERO}, {NULL, 0}};
 
@@ -146,7 +133,8 @@ static int zmath_rand(lua_State *L)
 {
     int lo = luaL_checkint(L, 1), hi = luaL_checkint(L, 2);
     g_rand = g_rand * 1103515245u + 12345u;
-    lua_pushnumber(L, hi >= lo ? lo + (int)((g_rand >> 8) % (unsigned)(hi - lo + 1)) : lo);
+    /* engine: min + rand() % (max - min), i.e. [min, max) */
+    lua_pushnumber(L, hi > lo ? lo + (int)((g_rand >> 8) % (unsigned)(hi - lo)) : lo);
     return 1;
 }
 static int zmath_randseed(lua_State *L) { g_rand = (unsigned)luaL_checkint(L, 1); return 0; }
@@ -202,15 +190,13 @@ void zlibs_open(lua_State *L)
     libgl_open(L);
     libsys_open(L);
     libmedia_open(L);
+    libtext_open(L);
+    libdata_open(L);
 
-    open_stubs(L, "pointer", pointer_fns);
     open_stubs(L, "engine", engine_fns);
-    open_stubs(L, "text", text_fns);
-    open_stubs(L, "font", font_fns);
     open_stubs(L, "spi", spi_fns);
     open_stubs(L, "uart", uart_fns);
     open_stubs(L, "eeprom", eeprom_fns);
-    open_stubs(L, "zfile", zfile_fns);
     open_stubs(L, "dict", dict_fns);
     open_stubs(L, "exp_int", exp_int_fns);
 }
