@@ -14,7 +14,8 @@ reimplements the engine libraries (`gl`, `movie`, `audio`, `input`, ...) on the 
 
 ## Run
 
-    build/undertow "Sudoku (USA).iso"            # needs C:\msys64\mingw64in on PATH (DLLs)
+    sh tools/bundle_dlls.sh                     # once per build: copy DLLs next to the exe
+    build/undertow "Sudoku (USA).iso"            # or drag the .iso onto undertow.exe
 
 Keys: arrows, Enter/Space = SELECT, Z/X/C/V = A/B/C/D, 0-9, Backspace = DVD MENU,
 Tab = GAME MENU, Esc = quit. Testing options: `--trace`, `--keys 14,14 --key-start 4000
