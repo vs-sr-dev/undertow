@@ -14,9 +14,14 @@ reimplements the engine libraries (`gl`, `movie`, `audio`, `input`, ...) on the 
 
 ## Run
 
-    build/undertow "Sudoku (USA).iso" --trace --max-calls 3000 --keys 14,14,10,14
+    build/undertow "Sudoku (USA).iso"            # needs C:\msys64\mingw64in on PATH (DLLs)
 
-Currently headless: graphics/video/audio are stubs that log every engine call.
+Keys: arrows, Enter/Space = SELECT, Z/X/C/V = A/B/C/D, 0-9, Backspace = DVD MENU,
+Tab = GAME MENU, Esc = quit. Testing options: `--trace`, `--keys 14,14 --key-start 4000
+--key-interval 1500`, `--exit-after MS --screenshot shot.bmp`.
+
+Working: MPEG-2 movies with sound, iframes, OSD textures/overlays, sound effects, remote
+input. Missing: text/fonts, OSD animations, saves (eeprom), pointer library.
 
 ## Layout
 

@@ -3,16 +3,12 @@
 
 #include "lua.h"
 
-typedef struct {
-    int trace;               /* log stub calls */
-    int trace_all;           /* also log idle input polls */
-    unsigned long max_calls; /* abort after this many API calls (0 = unlimited) */
-    int keys[64];            /* scripted key presses for headless runs */
-    int nkeys, key_pos;
-} ZlibsConfig;
-
-extern ZlibsConfig zcfg;
-
+/* Register every engine library into L. */
 void zlibs_open(lua_State *L);
+
+/* per-library registration (lib_*.c) */
+void libgl_open(lua_State *L);    /* gl, rm, iframe */
+void libsys_open(lua_State *L);   /* input, time */
+void libmedia_open(lua_State *L); /* movie, audio */
 
 #endif

@@ -6,6 +6,8 @@
 #include <string.h>
 #include <strings.h>
 
+#include <SDL.h>
+
 #define SECTOR 2048
 
 typedef struct {
@@ -23,7 +25,9 @@ struct VfsFile {
 };
 
 static char g_root[1024];
-static FILE *g_iso;           /* NULL -> directory backend */
+static FILE *g_iso;           /* NULL -> directory backend; directory lookups only */
+static char g_iso_path[1024];
+static SDL_mutex *g_iso_lock; /* guards g_iso (lookups come from several threads) */
 static uint32_t g_root_lba, g_root_size;
 
 /* ---------------- directory backend ---------------- */
@@ -149,13 +153,18 @@ static int iso_resolve(const char *disc_path, IsoEntry *out)
     IsoEntry cur = {NULL, g_root_lba, g_root_size, 1};
     char comp[256];
     const char *p = disc_path;
+    int rc = 0;
 
+    SDL_LockMutex(g_iso_lock);
     while ((p = next_comp(p, comp, sizeof(comp))) != NULL) {
-        if (!cur.is_dir || iso_find(cur.lba, cur.size, comp, &cur) != 0)
-            return -1;
+        if (!cur.is_dir || iso_find(cur.lba, cur.size, comp, &cur) != 0) {
+            rc = -1;
+            break;
+        }
     }
+    SDL_UnlockMutex(g_iso_lock);
     *out = cur;
-    return 0;
+    return rc;
 }
 
 static int iso_mount(const char *path)
@@ -166,6 +175,8 @@ static int iso_mount(const char *path)
     g_iso = fopen(path, "rb");
     if (!g_iso)
         return -1;
+    snprintf(g_iso_path, sizeof(g_iso_path), "%s", path);
+    g_iso_lock = SDL_CreateMutex();
     for (sec = 16; sec < 32; sec++) {
         if (iso_read(sec, vd, SECTOR) != 0 || memcmp(vd + 1, "CD001", 5) != 0)
             break;
@@ -213,7 +224,11 @@ VfsFile *vfs_open(const char *disc_path)
             free(f);
             return NULL;
         }
-        f->fp = g_iso;
+        f->fp = fopen(g_iso_path, "rb");   /* private handle: files are read concurrently */
+        if (!f->fp) {
+            free(f);
+            return NULL;
+        }
         f->base = (uint64_t)e.lba * SECTOR;
         f->size = e.size;
     } else {
@@ -259,7 +274,7 @@ void vfs_close(VfsFile *f)
 {
     if (!f)
         return;
-    if (f->fp && f->fp != g_iso)
+    if (f->fp)
         fclose(f->fp);
     free(f);
 }
