@@ -29,6 +29,7 @@ typedef struct {
     const char *screenshot;
     const char *eeprom;
     int scale;
+    uint32_t ir_repeat, key_hold;
 } Options;
 
 static Diz g_diz;
@@ -81,6 +82,10 @@ static int parse_args(int argc, char **argv, Options *o)
             o->screenshot = argv[++i];
         else if (!strcmp(a, "--eeprom") && more)
             o->eeprom = argv[++i];
+        else if (!strcmp(a, "--ir-repeat") && more)
+            o->ir_repeat = (uint32_t)strtoul(argv[++i], NULL, 10);
+        else if (!strcmp(a, "--key-hold") && more)
+            o->key_hold = (uint32_t)strtoul(argv[++i], NULL, 10);
         else if (!strcmp(a, "--scale") && more)
             o->scale = atoi(argv[++i]);
         else if (a[0] != '-' && !o->disc)
@@ -242,6 +247,44 @@ static int map_pad_button(int b)
     }
 }
 
+/* Held keys for --ir-repeat: when each (remote, key) was last sent, 0 = not held. The
+ * engine itself has no key-up or repeat; a repeating IR remote resends the code. */
+static uint32_t g_held[7][32];
+static uint32_t g_hold_until[32];   /* scripted holds, remote 1 */
+
+static void key_down(int key, int remote)
+{
+    input_push(key, remote);
+    if (key >= 0 && key < 32 && remote >= 1 && remote <= 6)
+        g_held[remote][key] = rt_now_ms() | 1;
+}
+
+static void key_up(int key, int remote)
+{
+    if (key >= 0 && key < 32 && remote >= 1 && remote <= 6)
+        g_held[remote][key] = 0;
+}
+
+static void repeat_held(uint32_t period)
+{
+    uint32_t now = rt_now_ms();
+    int r, k;
+    for (k = 0; k < 32; k++) {
+        if (g_hold_until[k] && now >= g_hold_until[k]) {
+            g_hold_until[k] = 0;
+            key_up(k, 1);
+        }
+    }
+    if (!period)
+        return;
+    for (r = 1; r <= 6; r++)
+        for (k = 0; k < 32; k++)
+            if (g_held[r][k] && now - g_held[r][k] >= period) {
+                input_push(k, r);
+                g_held[r][k] = now | 1;
+            }
+}
+
 /* Left stick as a d-pad: one key when it leaves the dead zone or changes direction. */
 static void pad_stick(Pad *p, int remote)
 {
@@ -252,8 +295,12 @@ static void pad_stick(Pad *p, int remote)
         dir = ax > ay ? (x > 0 ? KEY_RIGHT : KEY_LEFT) : (y > 0 ? KEY_DOWN : KEY_UP);
     else if (ax > 12000 || ay > 12000)
         dir = p->dir;   /* hysteresis */
-    if (dir != p->dir && dir >= 0)
-        input_push(dir, remote);
+    if (dir != p->dir) {
+        if (p->dir >= 0)
+            key_up(p->dir, remote);
+        if (dir >= 0)
+            key_down(dir, remote);
+    }
     p->dir = dir;
 }
 
@@ -353,7 +400,11 @@ int main(int argc, char **argv)
                 if (ev.key.keysym.sym == SDLK_ESCAPE)
                     running = 0;
                 else if (k >= 0)
-                    input_push(k, 1);
+                    key_down(k, 1);
+            } else if (ev.type == SDL_KEYUP) {
+                int k = map_key(ev.key.keysym.sym);
+                if (k >= 0)
+                    key_up(k, 1);
             } else if (ev.type == SDL_CONTROLLERDEVICEADDED) {
                 pad_add(ev.cdevice.which);
             } else if (ev.type == SDL_CONTROLLERDEVICEREMOVED) {
@@ -361,7 +412,11 @@ int main(int argc, char **argv)
             } else if (ev.type == SDL_CONTROLLERBUTTONDOWN) {
                 int remote, k = map_pad_button(ev.cbutton.button);
                 if (pad_find(ev.cbutton.which, &remote) && k >= 0)
-                    input_push(k, remote);
+                    key_down(k, remote);
+            } else if (ev.type == SDL_CONTROLLERBUTTONUP) {
+                int remote, k = map_pad_button(ev.cbutton.button);
+                if (pad_find(ev.cbutton.which, &remote) && k >= 0)
+                    key_up(k, remote);
             } else if (ev.type == SDL_CONTROLLERAXISMOTION) {
                 int remote;
                 Pad *p = pad_find(ev.caxis.which, &remote);
@@ -370,8 +425,13 @@ int main(int argc, char **argv)
                     pad_stick(p, remote);
             }
         }
-        if (next_key < opt.nkeys && now >= opt.key_start + next_key * opt.key_interval)
-            input_push(opt.keys[next_key++], 1);
+        if (next_key < opt.nkeys && now >= opt.key_start + next_key * opt.key_interval) {
+            int k = opt.keys[next_key++];
+            key_down(k, 1);
+            if (k >= 0 && k < 32)
+                g_hold_until[k] = now + (opt.key_hold ? opt.key_hold : 1);
+        }
+        repeat_held(opt.ir_repeat);
         if (opt.exit_after && now >= opt.exit_after) {
             if (opt.screenshot)
                 save_screenshot(ren, target, opt.screenshot);
