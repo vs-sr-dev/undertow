@@ -19,7 +19,7 @@ add_library(lua50 STATIC
   ${LUA_DIR}/src/lib/lstrlib.c ${LUA_DIR}/src/lib/ltablib.c)
 target_include_directories(lua50 PUBLIC ${LUA_DIR}/include ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(lua50 PUBLIC "LUA_USER_H=\"luauser.h\"")
-target_compile_options(lua50 PRIVATE -w)
+target_compile_options(lua50 PRIVATE -w -fwrapv)   # int lua_Number wraps like the MIPS
 
 find_package(ZLIB REQUIRED)
 find_package(PkgConfig REQUIRED)
@@ -35,3 +35,7 @@ target_link_directories(undertow PRIVATE ${SDL2_LIBRARY_DIRS})
 # SDL_MAIN_HANDLED: plain console main(), no SDL2main / -mwindows
 target_link_libraries(undertow PRIVATE lua50 ZLIB::ZLIB PkgConfig::FFMPEG SDL2)
 target_compile_options(undertow PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation)
+
+# --- zbcc: Lua source -> ZAPiT .zbc (homebrew discs)
+add_executable(zbcc tools/zbcc.c)
+target_link_libraries(zbcc PRIVATE lua50 ZLIB::ZLIB)

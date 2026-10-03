@@ -42,9 +42,11 @@ static void DumpInt(int x, DumpState* D)
  DumpBlock(&x,sizeof(x),D);
 }
 
+/* UNDERTOW: ZAPiT bytecode stores size_t as 32 bits; write it as such on any host */
 static void DumpSize(size_t x, DumpState* D)
 {
- DumpBlock(&x,sizeof(x),D);
+ unsigned int y=(unsigned int)x;
+ DumpBlock(&y,sizeof(y),D);
 }
 
 static void DumpNumber(lua_Number x, DumpState* D)
@@ -145,7 +147,7 @@ static void DumpHeader(DumpState* D)
  DumpByte(VERSION,D);
  DumpByte(luaU_endianness(),D);
  DumpByte(sizeof(int),D);
- DumpByte(sizeof(size_t),D);
+ DumpByte(sizeof(unsigned int),D);	/* UNDERTOW: 32-bit sizes */
  DumpByte(sizeof(Instruction),D);
  DumpByte(SIZE_OP,D);
  DumpByte(SIZE_A,D);

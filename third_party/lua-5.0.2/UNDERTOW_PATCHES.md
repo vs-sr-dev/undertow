@@ -5,4 +5,5 @@ lives in `src/luauser.h` of Undertow (LUA_USER_H). Source changes, all marked `U
 
 - `src/lvm.c` (Arith, TM_DIV): integer division by zero yields 0 instead of trapping the host.
 - `src/lib/lstrlib.c` (str_format %e/%f/%g): cast the integer argument to double.
-- `src/lundump.c` (LoadSize, LoadHeader): bytecode `size_t` is always 32-bit (64-bit hosts).
+- `src/lundump.c` (LoadSize, LoadHeader), `src/ldump.c` (DumpSize, DumpHeader): bytecode
+  `size_t` is always 32-bit (64-bit hosts).
