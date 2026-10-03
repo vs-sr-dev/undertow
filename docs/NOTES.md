@@ -103,6 +103,12 @@ matching `.dat` holds metrics (format TBD).
 - Letter Zap: engine 0.11.3.59 (oldest so far, md5 d9952fe9...). Cube (4x4 Boggle; boards
   from `tag.mtx` records such as `sndeelidfetebars`) and Tag!; `data_xx/` per language
   (dic38.zdt, lfreq.dat letter pool, tag.mtx); saves under "LETTER ZAP".
+- 4 Degrees: The Arc of Trivia - Bible Edition: engine **1.01.3**.5bpa1s (first 1.x build
+  seen, md5 666674c7...), same .zbc format and API. One MPEG movie per question in six
+  category folders (`01_O_T_People/01_01_D_Japheth.mpg`...). Saves under "4 DEGREES BIBLE".
+  The letter in the movie name is the correct answer; the script's question table holds
+  `{0, answer_index (A=0), 415, movie, answer}` (main/22).
+- Studio: Nytric (logo movie) made Gemz, Lock 5, Letter Zap and 4 Degrees.
 
 ### Engine API semantics (verified in engine code or by script usage)
 - Key codes (script constants): 0-9 digits, 10 UP, 11 DOWN, 12 RIGHT, 13 LEFT,

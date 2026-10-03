@@ -17,6 +17,7 @@ PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 | Gemz | Playable (menus, Classic mode board, animations) |
 | Lock 5 | Playable (menus, player join, name entry, spinning and locking reels) |
 | Letter Zap! | Cube playable (word dictionary, scoring); Tag! untested |
+| 4 Degrees: Bible Edition | Playable (menus, question movies, answering) |
 
 Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
 alpha and animations, text with the disc fonts, sound effects, remote control input,
