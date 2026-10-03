@@ -136,6 +136,13 @@ matching `.dat` holds metrics (format TBD).
   not" questions. Same quiz mechanics as 4 Degrees and Quiz Konnect (four options, timer,
   hints, wrong answers removed): the ancestor of that family.
 
+- Click!: Wheel of Fortune style word puzzle (Nytric, internal gameID 15). Its .diz says
+  `appname=4 Degrees Test` and has no versions (built from a 4 Degrees test project);
+  board 3 and board a engines, md5 6f2f00c3... Clues in `clues1..6`, letter images in
+  `letters/`; player names are composed with `BlitOverlayWithCR` (4 args, plain copy). The
+  phrase is solved out loud: the board reveals it and the player confirms whether they
+  were right. Saves under "CLICK".
+
 ### Build stamps (version suffixes)
 The last part of a version string (`68fbbs`, `5asf0s`...) is the build time in base 36
 (`0-9a-z`): year-2000, month, day, hour, minutes/2, then the first letter of the build

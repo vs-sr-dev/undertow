@@ -22,6 +22,7 @@ PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 | Quiz Konnect | Playable (late Indian release of 4 Degrees, not in Redump; see Credits) |
 | Zap 21 | Playable (blackjack: menus, table, dealing, a full hand) |
 | Rewind | Playable (trivia: menus, questions, hints) |
+| Click! | Playable (word puzzle: categories, letters, honor-system solving) |
 
 Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
 alpha and animations, text with the disc fonts, sound effects, remote control input,
