@@ -33,9 +33,8 @@ void *data_buffer_new(size_t n)
     return NULL;
 }
 
-static Buf *find_buf(lua_State *L, int idx)
+static Buf *lookup_buf(const void *p)
 {
-    void *p = lua_touserdata(L, idx);
     int i;
     if (!p)
         return NULL;
@@ -43,6 +42,24 @@ static Buf *find_buf(lua_State *L, int idx)
         if (g_bufs[i].p == p)
             return &g_bufs[i];
     return NULL;
+}
+
+static Buf *find_buf(lua_State *L, int idx) { return lookup_buf(lua_touserdata(L, idx)); }
+
+size_t data_buffer_size(const void *p)
+{
+    Buf *b = lookup_buf(p);
+    return b ? b->n : 0;
+}
+
+void data_buffer_free(void *p)
+{
+    Buf *b = lookup_buf(p);
+    if (b) {
+        free(b->p);
+        b->p = NULL;
+        b->n = 0;
+    }
 }
 
 /* Buffer and checked byte range [off, off+len) */
@@ -66,12 +83,7 @@ static int pt_create(lua_State *L)
 
 static int pt_destroy(lua_State *L)
 {
-    Buf *b = find_buf(L, 1);
-    if (b) {
-        free(b->p);
-        b->p = NULL;
-        b->n = 0;
-    }
+    data_buffer_free(lua_touserdata(L, 1));
     return 0;
 }
 

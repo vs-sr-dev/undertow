@@ -13,14 +13,14 @@ PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 
 | Game | Status |
 |-|-|
-| Sudoku | Playable (menus, a full board with timer and number entry) |
+| Sudoku | Playable (menus, a full board with timer and number entry, save and Load & Resume) |
 | Gemz | Playable (menus, Classic mode board, animations) |
 
 Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
 alpha and animations, text with the disc fonts, sound effects, remote control input,
-disc file access, reading discs directly from `.iso` images.
+disc file access, reading discs directly from `.iso` images, save games.
 
-Not yet: save games (EEPROM), parabola/blinking animations, deinterlacing, engine
+Not yet: parabola/blinking animations, deinterlacing, engine
 built-in screens (`iframe.ShowPredefined`), multiple remotes. Other titles of the
 16-disc library are untested.
 
@@ -45,6 +45,10 @@ The code is portable C99 + SDL2 + FFmpeg; other platforms should only need build
     build/undertow "Sudoku (USA).iso"     # or drag an .iso onto undertow.exe
 
 An extracted disc directory works too.
+
+Save games go to `undertow.eep` next to the executable: a 32 KB image of the console's
+save EEPROM in the engine's own format, shared by every disc as on the real machine.
+`--eeprom FILE` uses another image.
 
 | Remote | Keyboard |
 |-|-|

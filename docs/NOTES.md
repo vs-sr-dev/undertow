@@ -124,6 +124,30 @@ matching `.dat` holds metrics (format TBD).
   Y, Cb, Cr, ?)` (meanings after w,h inferred; colours YCbCr), `RenderSimple(font, str)`;
   `GetOverlayId(tid)` -> hidden overlay the script positions.
 
+### Save EEPROM (engine `apps/zit/eeprom_mgr.c` 0x80604000.., Lua `zlua_eeprom.c` 0x806295f4..)
+Implemented byte-compatibly in `src/eeprom.c`. AT25256A, 512 pages x 64 bytes, page i at
+address i*64, whole image read once then written through page by page.
+- Page: u16 LE CRC-16/XMODEM (poly 0x1021, init 0) of bytes 2..63; u16 LE flags (bit15
+  free, bits13-12 type 0 single / 1 first / 2 middle / 3 last, bits8-0 next page); u32 0;
+  56 bytes payload. **Little-endian** although the CPU is big-endian. Formatted page =
+  `EE 3D 00 80` + 60 zeros; a blank 0xFF chip is not handled by the engine and no game
+  calls `Format`, so new images start formatted.
+- A save = header `{u16 app_id, u16 size, char app_name[17], char save_name[33]}` (54
+  bytes) + data, `ceil((size+54)/56)` pages allocated first-fit in ascending order; first
+  page holds the header and data[0..1], then 56 data bytes per page.
+- **IDs are indices into the list built by the last Enumerate call** (pages scanned
+  ascending for first pages). `EnumerateGameSavesByName` matches app_name (skips app_id 0);
+  `ByID(0)` matches everything.
+- Lua returns end with an **error flag** (false on success), which is what scripts test:
+  `SaveGameToNewSlot(app_id, size, app_name, save_name, data) -> err` (err only when out of
+  pages), `SaveGameToExistingSlot(id, data) -> false` (stored size, cannot grow),
+  `EnumerateGameSaves*(x) -> count, false`, `GetSaveNameByID(id) -> app_name, save_name,
+  false`, `LoadSaveByID(id) -> buffer, err` (buffer of whole pages = n*56 bytes; err on CRC
+  failure, data still returned), `UnloadData(buf)`, `Format()`, `CorruptFlash()`,
+  `CheckFlashIntegrity() -> bad page count`. A delete exists (0x806060f8) but is not exposed.
+- Sudoku: app_id 6902 "SUDOKU01", 4 saves SOLUTION/GUESSES/SCRATCHES/CLOCK (84/44/164/4
+  bytes). Gemz: "GEMZ", BACKGROUNDS (4 bytes, saved on level completion) and top scores.
+
 ### Font `.dat` (verified on all fonts of both discs)
 5 x char[128] (face, family, charset, style, atlas .zbm name), then at 0x280:
 int count(96), first(32), end(128), cell size, kerning count; 0x294: count x 8 ints

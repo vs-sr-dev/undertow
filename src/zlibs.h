@@ -1,6 +1,8 @@
 #ifndef UNDERTOW_ZLIBS_H
 #define UNDERTOW_ZLIBS_H
 
+#include <stddef.h>
+
 #include "lua.h"
 
 /* Register every engine library into L. */
@@ -12,5 +14,11 @@ void libsys_open(lua_State *L);   /* input, time */
 void libmedia_open(lua_State *L); /* movie, audio */
 void libtext_open(lua_State *L);  /* font, text */
 void libdata_open(lua_State *L);  /* pointer, zfile */
+void libeeprom_open(lua_State *L); /* eeprom */
+
+/* pointer buffers (light userdata the scripts pass around), lib_data.c */
+void *data_buffer_new(size_t n);  /* zero-filled; NULL when the table is full */
+size_t data_buffer_size(const void *p); /* 0 if p is not a tracked buffer */
+void data_buffer_free(void *p);   /* ignores untracked pointers */
 
 #endif

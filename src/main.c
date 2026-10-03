@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "diz.h"
+#include "eeprom.h"
 #include "input.h"
 #include "lauxlib.h"
 #include "lua.h"
@@ -26,6 +27,7 @@ typedef struct {
     uint32_t key_start, key_interval;
     uint32_t exit_after;
     const char *screenshot;
+    const char *eeprom;
     int scale;
 } Options;
 
@@ -44,6 +46,7 @@ static void usage(void)
             "  --exit-after MS      quit after MS milliseconds\n"
             "  --screenshot FILE    save a BMP of the screen when quitting via --exit-after\n"
             "  --scale N            window size N*320x240 (default 3)\n"
+            "  --eeprom FILE        save-game EEPROM image (default undertow.eep next to the exe)\n"
             "keys: arrows, Enter=SELECT, Z/X/C/V=A/B/C/D, 0-9, Backspace=DVD MENU, Tab=GAME MENU\n");
 }
 
@@ -74,6 +77,8 @@ static int parse_args(int argc, char **argv, Options *o)
             o->exit_after = (uint32_t)strtoul(argv[++i], NULL, 10);
         else if (!strcmp(a, "--screenshot") && more)
             o->screenshot = argv[++i];
+        else if (!strcmp(a, "--eeprom") && more)
+            o->eeprom = argv[++i];
         else if (!strcmp(a, "--scale") && more)
             o->scale = atoi(argv[++i]);
         else if (a[0] != '-' && !o->disc)
@@ -223,6 +228,14 @@ int main(int argc, char **argv)
         return 1;
     }
     rt_init();
+    if (opt.eeprom) {
+        eep_open(opt.eeprom);
+    } else {   /* one EEPROM per console, shared by every disc as on the real machine */
+        char *base = SDL_GetBasePath(), path[1024];
+        snprintf(path, sizeof(path), "%sundertow.eep", base ? base : "");
+        SDL_free(base);
+        eep_open(path);
+    }
     if (audio_init() != 0)
         fprintf(stderr, "audio: %s (continuing without sound)\n", SDL_GetError());
     snprintf(title, sizeof(title), "Undertow - %s", g_diz.appname);

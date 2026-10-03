@@ -76,11 +76,6 @@ static const StubFn exp_int_fns[] = {
     {"Configure", R_ZERO}, {"Close", R_ZERO}, {"Test", R_ZERO}, {NULL, 0}};
 static const StubFn uart_fns[] = {
     {"RxD", R_ZERO}, {"TxD", R_ZERO}, {"Open", R_ONE}, {"Close", R_ONE}, {NULL, 0}};
-static const StubFn eeprom_fns[] = {
-    {"SaveGameToNewSlot", R_ONE}, {"GetSaveNameByID", R_STRS}, {"LoadSaveByID", R_NILZERO},
-    {"UnloadData", R_NONE}, {"SaveGameToExistingSlot", R_ONE},
-    {"EnumerateGameSavesByID", R_POS}, {"EnumerateGameSavesByName", R_POS},
-    {"Format", R_NONE}, {"CorruptFlash", R_NONE}, {"CheckFlashIntegrity", R_ONE}, {NULL, 0}};
 static const StubFn dict_fns[] = {
     {"Load", R_ID}, {"Unload", R_NONE}, {"Lookup", R_ZERO}, {NULL, 0}};
 
@@ -192,11 +187,11 @@ void zlibs_open(lua_State *L)
     libmedia_open(L);
     libtext_open(L);
     libdata_open(L);
+    libeeprom_open(L);
 
     open_stubs(L, "engine", engine_fns);
     open_stubs(L, "spi", spi_fns);
     open_stubs(L, "uart", uart_fns);
-    open_stubs(L, "eeprom", eeprom_fns);
     open_stubs(L, "dict", dict_fns);
     open_stubs(L, "exp_int", exp_int_fns);
 }
