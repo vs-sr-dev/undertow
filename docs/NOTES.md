@@ -71,11 +71,24 @@ Little-endian header, 0x2C bytes, then zlib:
 Pixels: u16 **LE**, `A[15:12] Y[11:8] Cb[7:4] Cr[3:0]` (OSD mode "4444"), chroma neutral at 8.
 `ii_nothing.zbm` fails its zlib checksum (probably a dummy).
 
-### Game-disc `.zbm` (verified on all 1129 images of Sudoku + Gemz)
-0x30-byte header: version 1, type 1 (TEXTURE_OSD), fmt 4, bpp 2, w, h, 0, 0, 1,
-packed, unpacked, 0; then zlib. Pixels u16 BE with pairs swapped (= 32-bit LE word read),
-mode "4633" (`A4 Y6 Cb3 Cr3`). Fonts `*.zbm` are 16x6 ASCII atlases (32..127); the
-matching `.dat` holds metrics (format TBD).
+### Game-disc `.zbm` (verified on all 3514 images of the 10 discs)
+0x30-byte header, u32 LE: +0 version 1, +4 type 1 (TEXTURE_OSD), +8 format, +0xC bytes per
+pixel 2, +0x10 w, +0x14 h, +0x18 colour-key enable, +0x1C key (packed pixel), +0x20 1 =
+zlib / 0 = raw pixels, +0x24 packed, +0x28 unpacked size, +0x2C full-screen fast-copy flag;
+then the data. Pixels u16 BE with pairs swapped (= 32-bit LE word read). The engine loader
+(0x8060e784) asserts only version, type and the unpacked size, and stores pixels
+bit-inverted in memory. Every disc image is format 4 with no key. Fonts `*.zbm` are 16x6
+ASCII atlases (32..127) with a `.dat` of metrics (see Font `.dat`).
+
+Pixel formats, from the colour packer 0x80612860(Y, Cb, Cr, A, fmt) (name -> code parser
+0x80612780; format 0 means the current OSD mode):
+
+| code | name | u16 |
+|-|-|-|
+| 1 | `844` | Y[15:8] Cb[7:4] Cr[3:0] |
+| 2 | `655` | Y[15:10] Cb[9:5] Cr[4:0] |
+| 3 | `4444` | A[15:12] Y[11:8] Cb[7:4] Cr[3:0] |
+| 4 | `4633` | A[15:12] Y[11:6] Cb[5:3] Cr[2:0] |
 
 ## Game discs (verified: Sudoku, Gemz)
 
@@ -191,13 +204,40 @@ Konnect), 68fbbs 2006-08-15 (Sudoku, Gemz, VeggieTales).
   3 another kind (not understood). Core 0x8060e960 ignores n >= count.
 - `dict.Load(res, name) -> handle` (light userdata, NULL on failure), `dict.Lookup(handle,
   word) -> boolean`, `dict.Unload(handle)`; see "Dictionary .zdt".
-- Text: `text.Render(str, font, w, h, halign, valign, line_spacing, char_spacing, ?, tint,
-  Y, Cb, Cr, ?)` (binding 0x80628d4c; args 7/8/9 are signed bytes at +0x16/+0x15/+0x14 of the
-  style struct; osd_font.c adds +0x16 to the line height (0x80608890, 0x80608928) and +0x15
-  to each glyph advance (0x80608abc); arg 9 goes to line splitting 0x80607c90, unknown;
-  colours YCbCr). Scripts pass negative line spacing (Sudoku "TYPICAL" -6, Letter Zap word
-  list -4): read as char spacing it squashed the letters, `RenderSimple(font, str)`;
-  `GetOverlayId(tid)` -> hidden overlay the script positions.
+- Text: `text.Render(str, font, w, h, halign, valign, line_spacing, word_spacing,
+  char_spacing, tint, Y, Cb, Cr, debug_border)` (binding 0x80628d4c -> 0x80606ba8 -> layout
+  and draw 0x80608d34). Args 7/8/9 are signed bytes at +0x16/+0x15/+0x14 of the style struct
+  (stores at 0x80628e14/34/54): line spacing is added to the line pitch (cell + arg 7,
+  0x80608ad0), word spacing to the gap between words (advance of glyph ' ' + arg 8,
+  0x80608abc), char spacing between glyphs of a word (0x80607dd4). Static scan of all
+  discs: arg 8 is always 0, arg 9 is 0/1/2 (Gemz names, Letter Zap, Lock 5, Zap 21,
+  VeggieTales). Arg 14 draws a 1-pixel debug outline round the texture. Colours YCbCr.
+  - Layout: paragraphs split with `strtok(s, "
+")` (0x80608220), words with
+    `strtok(p, " 	
+")` (0x8060808c): runs collapse and empty lines vanish; spaces are
+    never drawn. Greedy wrap at word boundaries only (new line when line + gap + word > w,
+    0x80608538); a word is never broken (it is clipped). No fixed limits: string, words and
+    lines live in heap vectors; anything outside the texture is clipped.
+  - Glyphs: no range check (a char outside [first, end) reads past the font's arrays);
+    glyph 32 is read unconditionally for the word gap. Measuring uses `advance`; drawing
+    blits atlas columns [x0+lb, x0+lb+ink) x rows [y0, y1) at pen + lb, then moves the pen
+    by lb+ink+rb (0x80607d60). Kerning is a linear search per character pair (0x80607a68).
+  - The text texture takes the **font atlas's format** (0x80606be0) and is filled with the
+    atlas key; without tint, opaque glyph pixels are copied as they are. The blitter refuses
+    copies between different formats (0x80613654), so a non-4633 font needs the matching
+    `gl.SelectOSDMode`.
+  - `RenderSimple(font, str)` (0x80607acc): every byte is a glyph (spaces and `
+`
+    included), one line, no kerning. `GetOverlayId(tid)` -> hidden overlay the script
+    positions.
+- `gl.SelectOSDMode(name)` (0x80626f1c -> 0x806126a0): sets the OSD pixel format (all discs
+  pass "4633"). `gl.CreateEmptyTexture(w, h [, format name])` (0x80626224): format as above
+  (default: the OSD mode); the texture is filled with the colour YCbCr (0x6a, 0xca, 0xdd)
+  (magenta) as key. There is no way to upload pixels from a script through `gl`.
+- `pointer.Get*/Set*` do **no bounds check** in the engine (SetU32MSB 0x8062839c writes at
+  buf + offset), and `tostring` of a light userdata shows its address: on the console a
+  script can read and write any memory. Undertow checks bounds.
 
 ### Save EEPROM (engine `apps/zit/eeprom_mgr.c` 0x80604000.., Lua `zlua_eeprom.c` 0x806295f4..)
 Implemented byte-compatibly in `src/eeprom.c`. AT25256A, 512 pages x 64 bytes, page i at
@@ -234,7 +274,8 @@ ships accent-stripped lists for en/fr/it/lat/pt/ro (16k-80k words, 3-8 letters; 
 5 x char[128] (face, family, charset, style, atlas .zbm name), then at 0x280:
 int count(96), first(32), end(128), cell size, kerning count; 0x294: count x 8 ints
 {x0, y0, x1, y1, advance, left bearing, ink width, right bearing}; then kerning count x
-{first, second, adjust}. Glyphs = `advance` columns from the start of their atlas cell.
+{first, second, adjust}. The engine loader (0x80607150) asserts only end - first == count
+(no limit of 256, first may be 0) and builds a rect per char code in [first, end) (see Text).
 
 ## Hardware / boot
 See `HARDWARE.md` (CPU core, memory map, SoC register blocks, boot flow).
@@ -244,5 +285,4 @@ Tools: `tools/mdis.py` (annotated disassembler), `tools/xref.py` (string/address
 ## Open questions
 - Register-level behaviour of the SoC blocks (OSD, video decoder, ATAPI, ASP, UART/IR).
 - `.osd` glyph format (header `00000002 00000010`), `startup.osd`.
-- Font `.dat` format on game discs; colour-key semantics.
 - OSD resolution/coordinate space (720x480?), animation timing, text rendering.

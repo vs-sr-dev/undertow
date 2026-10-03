@@ -1,7 +1,26 @@
 #include "zbm.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <zlib.h>
+
+static int g_osd_mode = 4;
+
+int zbm_format_code(const char *name)
+{
+    static const char *const names[] = {"844", "655", "4444", "4633"};
+    int i;
+    for (i = 0; name && i < 4; i++)
+        if (!strcmp(name, names[i]))
+            return i + 1;
+    return 0;
+}
+
+void zbm_set_osd_mode(int fmt)
+{
+    if (fmt >= 1 && fmt <= 4)
+        g_osd_mode = fmt;
+}
 
 static uint32_t rd32le(const uint8_t *p)
 {
@@ -28,7 +47,8 @@ uint8_t *zbm_decode(const uint8_t *data, size_t size, int *pw, int *ph)
 {
     int fw = size >= 4 && rd32le(data) == 0x10;
     size_t hdr = fw ? 0x2C : 0x30;
-    uint32_t w, h, packed, unpacked;
+    uint32_t w, h, packed, unpacked, fmt = 0, key = 0;
+    int compressed = 1, keyed = 0;
     uLongf rawlen;
     uint8_t *raw, *out;
     size_t i, n;
@@ -45,16 +65,29 @@ uint8_t *zbm_decode(const uint8_t *data, size_t size, int *pw, int *ph)
             return NULL;
         w = rd32le(data + 0x10);
         h = rd32le(data + 0x14);
+        fmt = rd32le(data + 0x08);
+        keyed = rd32le(data + 0x18) != 0;
+        key = rd32le(data + 0x1C) & 0xFFFF;
+        compressed = rd32le(data + 0x20) != 0;   /* 0: raw pixels follow the header */
         packed = rd32le(data + 0x24);
         unpacked = rd32le(data + 0x28);
+        if (!fmt)
+            fmt = (uint32_t)g_osd_mode;
+        if (fmt < 1 || fmt > 4)
+            return NULL;
     }
     n = (size_t)w * h;
+    if (!compressed)
+        packed = unpacked;
     if (!w || !h || unpacked < n * 2 || packed > size - hdr)
         return NULL;
     rawlen = unpacked;
     raw = malloc(unpacked);
     out = malloc(n * 4);
-    if (!raw || !out || uncompress(raw, &rawlen, data + hdr, packed) != Z_OK) {
+    if (raw && !compressed)
+        memcpy(raw, data + hdr, unpacked);
+    if (!raw || !out ||
+        (compressed && uncompress(raw, &rawlen, data + hdr, packed) != Z_OK)) {
         free(raw);
         free(out);
         return NULL;
@@ -69,8 +102,23 @@ uint8_t *zbm_decode(const uint8_t *data, size_t size, int *pw, int *ph)
             /* pixel pairs are stored swapped: (p1, p0) as big-endian u16s */
             size_t j = (i ^ 1) < n ? (i ^ 1) : i;
             v = (raw[j * 2] << 8) | raw[j * 2 + 1];
-            put_ycc(out + i * 4, ((v >> 6) & 63) << 2, ((v >> 3) & 7) << 5, (v & 7) << 5,
-                    (v >> 12) * 17);
+            switch (fmt) {
+            case 1:   /* 844 */
+                put_ycc(out + i * 4, v >> 8, ((v >> 4) & 15) << 4, (v & 15) << 4, 255);
+                break;
+            case 2:   /* 655 */
+                put_ycc(out + i * 4, (v >> 10) << 2, ((v >> 5) & 31) << 3, (v & 31) << 3, 255);
+                break;
+            case 3:   /* 4444, as the firmware variant */
+                put_ycc(out + i * 4, ((v >> 8) & 15) * 17, ((v >> 4) & 15) * 16 + 8,
+                        (v & 15) * 16 + 8, (v >> 12) * 17);
+                break;
+            default:  /* 4633 */
+                put_ycc(out + i * 4, ((v >> 6) & 63) << 2, ((v >> 3) & 7) << 5, (v & 7) << 5,
+                        (v >> 12) * 17);
+            }
+            if (keyed && v == key)
+                out[i * 4 + 3] = 0;
         }
     }
     free(raw);

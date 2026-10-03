@@ -103,9 +103,13 @@ static int ret_int(lua_State *L, int v)
     return 1;
 }
 
+/* SelectOSDMode("844" | "655" | "4444" | "4633"): pixel format of the OSD (binding 0x80626f1c
+ * -> 0x806126a0). Undertow composites in RGBA, so it only sets the format of format-0
+ * textures; on the console a texture whose format differs from the mode is not blitted. */
 static int gl_selectosdmode(lua_State *L)
 {
     rt_trace_call(L, "gl.SelectOSDMode");
+    zbm_set_osd_mode(zbm_format_code(luaL_optstring(L, 1, NULL)));
     return 0;
 }
 
