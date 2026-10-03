@@ -48,6 +48,8 @@ static void usage(void)
             "  --screenshot FILE    save a BMP of the screen when quitting via --exit-after\n"
             "  --scale N            window size N*320x240 (default 3)\n"
             "  --eeprom FILE        save-game EEPROM image (default undertow.eep next to the exe)\n"
+            "  --ir-repeat MS       resend held keys every MS ms, like a repeating IR remote\n"
+            "  --key-hold MS        hold each scripted key for MS ms (with --ir-repeat)\n"
             "keys (remote 1): arrows, Enter=SELECT, Z/X/C/V=A/B/C/D, 0-9, Backspace=DVD MENU,\n"
             "  Tab=GAME MENU. Game controllers are remotes 2-6: d-pad/left stick,\n"
             "  A/B/X/Y=A/B/C/D, LB/RB=SELECT, Start=GAME MENU, Back=DVD MENU\n");

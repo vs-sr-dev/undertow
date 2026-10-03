@@ -69,14 +69,31 @@ multiplayer games can be played with several pads.
 | DVD MENU / GAME MENU | Backspace / Tab | Back / Start |
 | (quit) | Esc | - |
 
+The engine itself only reports key presses: no releases and no auto-repeat. Whether
+holding a button on the real remote sends the code again is up to the console's IR
+decoder (not known yet). `--ir-repeat 100` resends a held key every 100 ms, as a repeating
+IR remote would; games that read held buttons (see Homebrew) want it.
+
 Debugging/testing options: `--trace` (log every engine API call; prints the Lua stack
-when stopped), `--keys 14,14 --key-start 4000 --key-interval 1500` (scripted input),
-`--exit-after MS --screenshot shot.bmp`.
+when stopped), `--keys 14,14 --key-start 4000 --key-interval 1500` (scripted input;
+`--key-hold MS` holds each one), `--exit-after MS --screenshot shot.bmp`.
+
+## Homebrew
+
+`build/zbcc out.zbc a.lua b.lua ...` compiles Lua 5.0.2 source into a `.zbc` like the
+discs' own `game.zbc` (each file is its own chunk, run in order). With a `gamewave.diz`
+and an engine binary from a disc of yours, that is a disc folder Undertow can run - and,
+using only the engine's API, in principle a real console too.
+
+Oh. And it runs Doom. Because of course it does:
+[gamewave-doom](https://github.com/vs-sr-dev/gamewave-doom) is Doom written as a Game Wave
+game script, developed in Undertow (bring your own IWAD).
 
 ## Repository layout
 
 - `src/` - emulator sources
 - `third_party/lua-5.0.2/` - Lua with local patches (`UNDERTOW_PATCHES.md`)
+- `tools/zbcc.c` - the homebrew compiler (built with the emulator)
 - `tools/` - Python research tools: `.lzh`/cheese container extractors, ZBM image
   decoder, annotated MIPS disassembler, xref/MMIO mappers, ZBC bytecode disassembler and
   API usage scanner, engine Lua library table finder
