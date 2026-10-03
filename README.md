@@ -18,13 +18,13 @@ PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 | Lock 5 | Playable (menus, player join, name entry, spinning and locking reels) |
 | Letter Zap! | Cube playable (word dictionary, scoring); Tag! untested |
 | 4 Degrees: Bible Edition | Playable (menus, question movies, answering) |
-| VeggieTales: Veg-Out! Family Tournament | Playable (menus, minigames such as Bingo; single remote only) |
+| VeggieTales: Veg-Out! Family Tournament | Playable (menus, minigames such as Bingo, multiplayer) |
 
 Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
 alpha and animations, text with the disc fonts, sound effects, remote control input,
 disc file access, reading discs directly from `.iso` images, save games.
 
-Not yet: parabola/blinking animations, deinterlacing, multiple remotes. Other titles of the
+Not yet: parabola/blinking animations, deinterlacing. Other titles of the
 16-disc library are untested.
 
 ## Legal
@@ -53,14 +53,17 @@ Save games go to `undertow.eep` next to the executable: a 32 KB image of the con
 save EEPROM in the engine's own format, shared by every disc as on the real machine.
 `--eeprom FILE` uses another image.
 
-| Remote | Keyboard |
-|-|-|
-| Arrows | Arrow keys |
-| SELECT | Enter / Space |
-| A B C D | Z X C V |
-| 0-9 | 0-9 (top row or keypad) |
-| DVD MENU / GAME MENU | Backspace / Tab |
-| (quit) | Esc |
+The keyboard is remote 1 (red); game controllers are remotes 2-6 in connection order, so
+multiplayer games can be played with several pads.
+
+| Remote | Keyboard | Game controller |
+|-|-|-|
+| Arrows | Arrow keys | D-pad / left stick |
+| SELECT | Enter / Space | LB / RB |
+| A B C D | Z X C V | A B X Y |
+| 0-9 | 0-9 (top row or keypad) | - |
+| DVD MENU / GAME MENU | Backspace / Tab | Back / Start |
+| (quit) | Esc | - |
 
 Debugging/testing options: `--trace` (log every engine API call; prints the Lua stack
 when stopped), `--keys 14,14 --key-start 4000 --key-interval 1500` (scripted input),

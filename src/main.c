@@ -47,7 +47,9 @@ static void usage(void)
             "  --screenshot FILE    save a BMP of the screen when quitting via --exit-after\n"
             "  --scale N            window size N*320x240 (default 3)\n"
             "  --eeprom FILE        save-game EEPROM image (default undertow.eep next to the exe)\n"
-            "keys: arrows, Enter=SELECT, Z/X/C/V=A/B/C/D, 0-9, Backspace=DVD MENU, Tab=GAME MENU\n");
+            "keys (remote 1): arrows, Enter=SELECT, Z/X/C/V=A/B/C/D, 0-9, Backspace=DVD MENU,\n"
+            "  Tab=GAME MENU. Game controllers are remotes 2-6: d-pad/left stick,\n"
+            "  A/B/X/Y=A/B/C/D, LB/RB=SELECT, Start=GAME MENU, Back=DVD MENU\n");
 }
 
 static int parse_args(int argc, char **argv, Options *o)
@@ -173,6 +175,88 @@ static int map_key(SDL_Keycode k)
     }
 }
 
+/* Game controllers act as remotes 2-6 (the keyboard is remote 1), in connection order. */
+#define MAX_PADS 5
+
+typedef struct {
+    SDL_GameController *gc;
+    SDL_JoystickID id;
+    int dir;                /* stick direction currently held, or -1 */
+} Pad;
+
+static Pad g_pads[MAX_PADS];
+
+static void pad_add(int index)
+{
+    int i;
+    for (i = 0; i < MAX_PADS && g_pads[i].gc; i++)
+        ;
+    if (i == MAX_PADS)
+        return;
+    g_pads[i].gc = SDL_GameControllerOpen(index);
+    if (!g_pads[i].gc)
+        return;
+    g_pads[i].id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(g_pads[i].gc));
+    g_pads[i].dir = -1;
+    printf("pad \"%s\" is remote %d\n", SDL_GameControllerName(g_pads[i].gc), i + 2);
+}
+
+static Pad *pad_find(SDL_JoystickID id, int *remote)
+{
+    int i;
+    for (i = 0; i < MAX_PADS; i++)
+        if (g_pads[i].gc && g_pads[i].id == id) {
+            *remote = i + 2;
+            return &g_pads[i];
+        }
+    return NULL;
+}
+
+static void pad_remove(SDL_JoystickID id)
+{
+    int remote;
+    Pad *p = pad_find(id, &remote);
+    if (p) {
+        SDL_GameControllerClose(p->gc);
+        p->gc = NULL;
+        printf("remote %d disconnected\n", remote);
+    }
+}
+
+static int map_pad_button(int b)
+{
+    switch (b) {
+    case SDL_CONTROLLER_BUTTON_DPAD_UP: return KEY_UP;
+    case SDL_CONTROLLER_BUTTON_DPAD_DOWN: return KEY_DOWN;
+    case SDL_CONTROLLER_BUTTON_DPAD_LEFT: return KEY_LEFT;
+    case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: return KEY_RIGHT;
+    case SDL_CONTROLLER_BUTTON_A: return KEY_A;
+    case SDL_CONTROLLER_BUTTON_B: return KEY_B;
+    case SDL_CONTROLLER_BUTTON_X: return KEY_C;
+    case SDL_CONTROLLER_BUTTON_Y: return KEY_D;
+    case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+    case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return KEY_SELECT;
+    case SDL_CONTROLLER_BUTTON_START: return KEY_GAME_MENU;
+    case SDL_CONTROLLER_BUTTON_BACK: return KEY_DVD_MENU;
+    default: return -1;
+    }
+}
+
+/* Left stick as a d-pad: one key when it leaves the dead zone or changes direction. */
+static void pad_stick(Pad *p, int remote)
+{
+    int x = SDL_GameControllerGetAxis(p->gc, SDL_CONTROLLER_AXIS_LEFTX);
+    int y = SDL_GameControllerGetAxis(p->gc, SDL_CONTROLLER_AXIS_LEFTY);
+    int ax = x < 0 ? -x : x, ay = y < 0 ? -y : y, dir = -1;
+    if (ax > 20000 || ay > 20000)
+        dir = ax > ay ? (x > 0 ? KEY_RIGHT : KEY_LEFT) : (y > 0 ? KEY_DOWN : KEY_UP);
+    else if (ax > 12000 || ay > 12000)
+        dir = p->dir;   /* hysteresis */
+    if (dir != p->dir && dir >= 0)
+        input_push(dir, remote);
+    p->dir = dir;
+}
+
 static void save_screenshot(SDL_Renderer *r, SDL_Texture *target, const char *path)
 {
     SDL_Surface *s = SDL_CreateRGBSurfaceWithFormat(0, SCREEN_W, SCREEN_H, 32,
@@ -223,7 +307,7 @@ int main(int argc, char **argv)
            g_diz.engine, g_diz.board, g_diz.engine_version);
 
     SDL_SetMainReady();
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0) {
         fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
         return 1;
     }
@@ -270,6 +354,20 @@ int main(int argc, char **argv)
                     running = 0;
                 else if (k >= 0)
                     input_push(k, 1);
+            } else if (ev.type == SDL_CONTROLLERDEVICEADDED) {
+                pad_add(ev.cdevice.which);
+            } else if (ev.type == SDL_CONTROLLERDEVICEREMOVED) {
+                pad_remove(ev.cdevice.which);
+            } else if (ev.type == SDL_CONTROLLERBUTTONDOWN) {
+                int remote, k = map_pad_button(ev.cbutton.button);
+                if (pad_find(ev.cbutton.which, &remote) && k >= 0)
+                    input_push(k, remote);
+            } else if (ev.type == SDL_CONTROLLERAXISMOTION) {
+                int remote;
+                Pad *p = pad_find(ev.caxis.which, &remote);
+                if (p && (ev.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX ||
+                          ev.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY))
+                    pad_stick(p, remote);
             }
         }
         if (next_key < opt.nkeys && now >= opt.key_start + next_key * opt.key_interval)
