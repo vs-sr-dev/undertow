@@ -50,6 +50,9 @@ void osd_video_set(const uint8_t *y, int ystride, const uint8_t *u, const uint8_
 void osd_video_clear(void);
 
 /* main thread */
+/* gl.Show: the whole OSD layer on/off (the video plane stays) */
+void osd_show(int shown);
+
 void osd_render(SDL_Renderer *r);
 
 #endif

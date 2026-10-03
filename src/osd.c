@@ -529,6 +529,15 @@ static void draw_video(SDL_Renderer *r)
     }
 }
 
+static int g_osd_shown = 1;
+
+void osd_show(int shown)
+{
+    SDL_LockMutex(rt_lock);
+    g_osd_shown = shown != 0;
+    SDL_UnlockMutex(rt_lock);
+}
+
 void osd_render(SDL_Renderer *r)
 {
     int i;
@@ -539,7 +548,7 @@ void osd_render(SDL_Renderer *r)
     SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
     SDL_RenderClear(r);
     draw_video(r);
-    for (i = 0; i < g_ndraw; i++) {
+    for (i = 0; g_osd_shown && i < g_ndraw; i++) {
         Texture *t = find_tex(g_draw[i].tex);
         SDL_Rect dst;
         if (!t)

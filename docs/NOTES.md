@@ -125,6 +125,10 @@ matching `.dat` holds metrics (format TBD).
   without errors (FFmpeg). Archive checked: `Quiz Konnect.zip`, 509 files, SHA-1
   8bb854630f336dd8c608b4c6cf7510ff3470abe2, MD5 501581b32467a0c5763385f0edf7c7a7.
 
+- Zap 21: blackjack (Nytric), game build `5blalj` (2005-11-21), engine 1.01.3.5bpa1s as
+  4 Degrees Bible. No saves. Hides the OSD with `gl.Show(0)` while the full-screen deck
+  shuffle movie plays, `gl.Show(1)` after.
+
 ### Build stamps (version suffixes)
 The last part of a version string (`68fbbs`, `5asf0s`...) is the build time in base 36
 (`0-9a-z`): year-2000, month, day, hour, minutes/2, then the first letter of the build
@@ -165,6 +169,8 @@ Konnect), 68fbbs 2006-08-15 (Sudoku, Gemz, VeggieTales).
 - `BlitOverlayWithCR(src, dst, x, y [, ?, blend, flag, Y1,Cb1,Cr1,A1, Y2,Cb2,Cr2,A2])`
   (binding 0x80625f60): same core 0x80613c44 as BlitOverlay, plus two packed colours
   (0x80612860) for a colour replacement. Letter Zap passes only 6 args.
+- `gl.Show(on)` (binding 0x80625dec -> 0x80612650 -> 0x806cb9b0): turns the whole OSD layer
+  on/off; the video plane stays. Lock 5 and Zap 21 pair Show(0)/Show(1) around movies.
 - `iframe.ShowPredefined(n)`: the engine builds a 4-entry predefined still table at boot
   (0x8060c3c0, count byte set to 4 at 0x8060c654): 0 `launching.m2v`, 1 `insert_disc.m2v`
   (from its file table; solid black if missing), 2 solid black (Y 16, Cb/Cr 128),

@@ -346,6 +346,15 @@ static int gl_blitoverlaywithcr(lua_State *L)
     return gl_blitoverlay(L);
 }
 
+/* Show(on): the whole OSD layer on/off (binding 0x80625dec -> 0x80612650). Zap 21 hides
+ * it while a full-screen movie plays. */
+static int gl_show(lua_State *L)
+{
+    rt_trace_call(L, "gl.Show");
+    osd_show(luaL_checkint(L, 1));
+    return 0;
+}
+
 /* Not understood yet: traced so they can be studied. */
 static int gl_traced_nop(lua_State *L)
 {
@@ -375,11 +384,11 @@ static const luaL_reg gl_lib[] = {
     {"AddAlphaAnimation", gl_addalphaanimation},
     {"AddVisibilityAnimation", gl_addvisibilityanimation},
     {"CreateTextureAnimation", gl_createtextureanimation}, {"BlitOverlay", gl_blitoverlay},
-    {"BlitOverlayWithCR", gl_blitoverlaywithcr},
+    {"BlitOverlayWithCR", gl_blitoverlaywithcr}, {"Show", gl_show},
     {"SetTextureAlphaLevel", gl_settexturealphalevel}, {NULL, NULL}};
 
 static const char *const gl_unknown_nop[] = {
-    "SetClipInfo", "ClearOSD", "Show", "AddParabolaAnimation", "AddBlinkingAnimation", NULL};
+    "SetClipInfo", "ClearOSD", "AddParabolaAnimation", "AddBlinkingAnimation", NULL};
 static const char *const gl_unknown_id[] = {NULL};
 
 static void add_traced(lua_State *L, const char *lib, const char *const *names,
