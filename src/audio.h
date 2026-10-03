@@ -18,7 +18,7 @@ void audio_stream_clear(void);
 /* sound effects */
 int audio_sfx_load(const uint8_t *zwf, size_t size);   /* returns id or -1 */
 void audio_sfx_unload(int id);
-void audio_sfx_play(int id, int loop);
+void audio_sfx_play(int id, int delay_ms);   /* starts after delay_ms */
 void audio_sfx_stop_all(void);
 
 #endif

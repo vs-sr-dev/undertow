@@ -88,7 +88,9 @@ static int au_unload(lua_State *L)
 static int au_play(lua_State *L)
 {
     rt_trace_call(L, "audio.Play");
-    audio_sfx_play(luaL_checkint(L, 1), luaL_optint(L, 2, 0));   /* TODO: 2nd arg = loop? */
+    /* engine 0x8061c9c8 queues {sound, id, now + arg 2}: the 2nd argument delays the
+     * start (ms); every known game passes 0 */
+    audio_sfx_play(luaL_checkint(L, 1), luaL_optint(L, 2, 0));
     return 0;
 }
 

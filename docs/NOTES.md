@@ -192,6 +192,14 @@ Konnect), 68fbbs 2006-08-15 (Sudoku, Gemz, VeggieTales).
   interlaced 4:3, MP2 44.1 kHz stereo.
 - `.zwf` sound effects are **mono** s16 BE at 44.1 kHz (header +4 = sample count, often odd;
   zlib data at +0x14). The wiki's "stereo 22050" plays identically by accident.
+  Header, five u32 LE (all 175 .zwf of 9 games): magic `0x7c90ee02`, sample count,
+  channels (always 1), size of the zlib data, a value that differs per file (a pointer
+  of the authoring tool?).
+- `audio` has only `Load(res, name)`, `Unload(id)`, `Play(id, delay)`: no volume, pan or
+  stop. `Play` (core 0x8061c9c8) queues `{sound, id, now_ms + delay}`: the **2nd argument
+  delays the start in ms** (every game passes 0). With more than 8 entries pending and
+  delay 0 it logs "Sound id %d will be queued (too many sounds)" (at most every 5 s), so
+  about 8 sounds play at once. Undertow: delay emulated, 16 voices, no queue.
 - `zmath.Rand(min, max)` -> [min, max) (engine: min + rand() % (max - min)).
 - `pointer`: byte offsets; `ToStringRange(buf, a, b)` -> bytes [a, b).
 - `zfile.ReadBytes(file, offset, count)` -> buffer; ReadLine -> (0, line) | (1, nil).

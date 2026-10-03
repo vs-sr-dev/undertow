@@ -9,7 +9,7 @@
 #include "runtime.h"
 
 #define STREAM_FRAMES (AUDIO_RATE * 2)   /* 2 s ring for the movie soundtrack */
-#define MAX_SFX 128
+#define MAX_SFX 1024
 #define MAX_VOICES 16
 
 typedef struct {
@@ -20,7 +20,8 @@ typedef struct {
 
 typedef struct {
     int sfx;           /* index into g_sfx, -1 = free */
-    int pos, loop;
+    int pos;
+    int delay;         /* frames of silence before it starts */
 } Voice;
 
 static SDL_AudioDeviceID g_dev;
@@ -54,13 +55,13 @@ static void mix(void *ud, Uint8 *out8, int len)
             if (vc->sfx < 0)
                 continue;
             s = &g_sfx[vc->sfx];
+            if (vc->delay > 0) {
+                vc->delay--;
+                continue;
+            }
             if (vc->pos >= s->nsamples) {
-                if (vc->loop && s->nsamples)
-                    vc->pos = 0;
-                else {
-                    vc->sfx = -1;
-                    continue;
-                }
+                vc->sfx = -1;
+                continue;
             }
             l += s->pcm[vc->pos];
             r += s->pcm[vc->pos];
@@ -195,7 +196,7 @@ void audio_sfx_unload(int id)
     SDL_UnlockAudioDevice(g_dev);
 }
 
-void audio_sfx_play(int id, int loop)
+void audio_sfx_play(int id, int delay_ms)
 {
     int s = find_sfx(id), v;
     if (s < 0)
@@ -205,7 +206,7 @@ void audio_sfx_play(int id, int loop)
         if (g_voices[v].sfx < 0) {
             g_voices[v].sfx = s;
             g_voices[v].pos = 0;
-            g_voices[v].loop = loop;
+            g_voices[v].delay = delay_ms > 0 ? (int)((long long)delay_ms * AUDIO_RATE / 1000) : 0;
             break;
         }
     }
