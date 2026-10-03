@@ -6,7 +6,8 @@
  *   0x280 int count, first_char, end_char, cell_size, kerning_count
  *   0x294 count x {int x0, y0, x1, y1, advance, left_bearing, ink_width, right_bearing}
  *   then kerning_count x {int first, second, adjust}
- * Glyphs are drawn by copying `advance` columns from the start of their atlas cell. */
+ * A glyph is atlas columns [x0+lb, x0+lb+ink) x rows [y0, y1), drawn at pen x + lb; the pen
+ * then moves by lb + ink + rb, while measuring uses `advance`. */
 #ifndef UNDERTOW_FONT_H
 #define UNDERTOW_FONT_H
 
@@ -18,8 +19,10 @@ typedef struct Font Font;
 typedef struct {
     int halign;           /* 0 left, 1 center, 2 right */
     int valign;           /* 0 top, 1 center, 2 bottom */
-    int char_spacing;     /* extra pixels between glyphs */
-    int line_spacing;     /* extra pixels between lines */
+    int char_spacing;     /* extra pixels between glyphs of a word (text.Render arg 9) */
+    int word_spacing;     /* extra pixels between words (arg 8) */
+    int line_spacing;     /* extra pixels between lines (arg 7) */
+    int simple;           /* RenderSimple: every byte drawn as a glyph on one line */
     int tint;             /* replace glyph colour with r,g,b */
     uint8_t r, g, b;
 } TextStyle;
@@ -32,7 +35,7 @@ Font *font_create(const uint8_t *dat, size_t size, uint8_t *atlas_rgba, int aw, 
 void font_free(Font *f);
 int font_line_height(const Font *f);
 
-/* Width of the widest line after wrapping to max_width (0 = no wrapping). */
+/* Size of the text after wrapping to max_width (0 = no wrapping). */
 void font_measure(const Font *f, const char *s, const TextStyle *st, int max_width, int *w,
                   int *h);
 

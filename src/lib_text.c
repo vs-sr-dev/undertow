@@ -1,8 +1,8 @@
 /* Lua libraries: font, text. A text object is a texture with the rendered string plus an
  * (initially hidden) overlay; scripts position it via text.GetOverlayId + gl.SetParameters.
  *
- * text.Render(str, font, w, h [, halign, valign, line_spacing, char_spacing, ?, tint,
- *             Y, Cb, Cr, ?]) - see docs/NOTES.md (spacings from apps/zit/osd_font.c);
+ * text.Render(str, font, w, h [, halign, valign, line_spacing, word_spacing, char_spacing,
+ *             tint, Y, Cb, Cr, debug_border]) - see docs/NOTES.md (spacings from apps/zit/osd_font.c);
  * colours are YCbCr (128,128 = neutral chroma). text.RenderSimple(font, str) sizes the
  * texture to the string. */
 #include <stdio.h>
@@ -196,6 +196,7 @@ static int tx_rendersimple(lua_State *L)
     const char *s = lua_tostring(L, 2);
     TextStyle st = {0};
     rt_trace_call(L, "text.RenderSimple");
+    st.simple = 1;
     if (!f || !s) {
         lua_pushnumber(L, -1);
         return 1;
@@ -208,7 +209,7 @@ static int tx_render(lua_State *L)
     const char *s = lua_tostring(L, 1);
     const Font *f = find_font(luaL_checkint(L, 2));
     int w = luaL_checkint(L, 3), h = luaL_checkint(L, 4);
-    TextStyle st;
+    TextStyle st = {0};
 
     rt_trace_call(L, "text.Render");
     if (!f || !s) {
@@ -218,7 +219,8 @@ static int tx_render(lua_State *L)
     st.halign = luaL_optint(L, 5, 0);
     st.valign = luaL_optint(L, 6, 0);
     st.line_spacing = (signed char)luaL_optint(L, 7, 0);   /* engine adds it to the line height */
-    st.char_spacing = (signed char)luaL_optint(L, 8, 0);   /* and this to each glyph advance */
+    st.word_spacing = (signed char)luaL_optint(L, 8, 0);   /* to the gap between words */
+    st.char_spacing = (signed char)luaL_optint(L, 9, 0);   /* between glyphs of a word */
     st.tint = luaL_optint(L, 10, 0) != 0;
     {
         int y = luaL_optint(L, 11, 235), cb = luaL_optint(L, 12, 128) - 128,
