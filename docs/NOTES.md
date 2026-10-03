@@ -5,7 +5,8 @@ GameWaveFans repo/wiki (github.com/gamewavefans/GameWaveFans).
 
 ## Sources on disk
 
-- `discs/Upgrade Disc/` - system upgrade disc **060505** (from `Upgrade Disc.zip`).
+- `discs/Upgrade Disc/` - system upgrade disc **1.021.060505** (from `Upgrade Disc.zip`,
+  dump shared on Reddit by u/Amasteriscool).
   Only `NYTRIC_FIRM/DVDAPP/SANYO_7xx/{app.cat.bin,upgrade.bin}` matter; the
   `.TMP`, `DrvMgt.dll`, `SECDRV.SYS` files are PC-side SafeDisc junk.
 - `discs/Sudoku (USA).iso`, `discs/Gemz (USA).iso` - Redump game images.

@@ -1,7 +1,8 @@
 # Game Wave hardware map (work in progress)
 
 Derived from static analysis of firmware 060505 (`app_sdram.bin`, built "May 5 2006")
-and `upgrade.bin`. Confidence: **[V]** verified in code, **[I]** inferred from strings/usage.
+and `upgrade.bin`, from the system upgrade disc 1.021.060505 (dump shared by Reddit user
+u/Amasteriscool). Confidence: **[V]** verified in code, **[I]** inferred from strings/usage.
 
 ## CPU
 

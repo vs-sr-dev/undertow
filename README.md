@@ -85,8 +85,10 @@ when stopped), `--keys 14,14 --key-start 4000 --key-interval 1500` (scripted inp
 Built on the format research of the [GameWaveFans](https://github.com/gamewavefans/GameWaveFans)
 project. See `THIRD_PARTY_NOTICES.md` for licenses.
 
-Thanks to Reddit user u/Amasteriscool for sharing the dump of Quiz Konnect, a late title
-that is not in the Redump set; its provenance and integrity checks are in `docs/NOTES.md`.
+Thanks to Reddit user u/Amasteriscool for sharing the dumps of the system upgrade disc
+1.021.060505, the source of the firmware research in `docs/HARDWARE.md`, and of Quiz
+Konnect, a late title that is not in the Redump set (provenance and integrity checks in
+`docs/NOTES.md`).
 
 ## License
 
