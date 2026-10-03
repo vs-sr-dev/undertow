@@ -23,7 +23,7 @@
 
 typedef struct {
     const char *disc;
-    int keys[64], nkeys;
+    int keys[64], remotes[64], nkeys;
     uint32_t key_start, key_interval;
     uint32_t exit_after;
     const char *screenshot;
@@ -41,7 +41,7 @@ static void usage(void)
     fprintf(stderr,
             "usage: undertow <disc.iso | disc_dir> [options]\n"
             "  --trace              log engine API calls\n"
-            "  --keys k1,k2,...     scripted key codes (testing)\n"
+            "  --keys k1,k2,...     scripted key codes (testing); k@r: from remote r\n"
             "  --key-start MS       time of the first scripted key (default 4000)\n"
             "  --key-interval MS    time between scripted keys (default 1500)\n"
             "  --exit-after MS      quit after MS milliseconds\n"
@@ -69,8 +69,12 @@ static int parse_args(int argc, char **argv, Options *o)
             rt_trace = 1;
         else if (!strcmp(a, "--keys") && more) {
             char *s = argv[++i];
-            while (*s && o->nkeys < 64) {
-                o->keys[o->nkeys++] = (int)strtol(s, &s, 10);
+            while (*s && o->nkeys < 64) {   /* key or key@remote */
+                o->remotes[o->nkeys] = 1;
+                o->keys[o->nkeys] = (int)strtol(s, &s, 10);
+                if (*s == '@')
+                    o->remotes[o->nkeys] = (int)strtol(s + 1, &s, 10);
+                o->nkeys++;
                 if (*s == ',')
                     s++;
             }
@@ -252,7 +256,7 @@ static int map_pad_button(int b)
 /* Held keys for --ir-repeat: when each (remote, key) was last sent, 0 = not held. The
  * engine itself has no key-up or repeat; a repeating IR remote resends the code. */
 static uint32_t g_held[7][32];
-static uint32_t g_hold_until[32];   /* scripted holds, remote 1 */
+static uint32_t g_hold_until[7][32];   /* scripted holds */
 
 static void key_down(int key, int remote)
 {
@@ -271,12 +275,12 @@ static void repeat_held(uint32_t period)
 {
     uint32_t now = rt_now_ms();
     int r, k;
-    for (k = 0; k < 32; k++) {
-        if (g_hold_until[k] && now >= g_hold_until[k]) {
-            g_hold_until[k] = 0;
-            key_up(k, 1);
-        }
-    }
+    for (r = 1; r <= 6; r++)
+        for (k = 0; k < 32; k++)
+            if (g_hold_until[r][k] && now >= g_hold_until[r][k]) {
+                g_hold_until[r][k] = 0;
+                key_up(k, r);
+            }
     if (!period)
         return;
     for (r = 1; r <= 6; r++)
@@ -428,10 +432,11 @@ int main(int argc, char **argv)
             }
         }
         if (next_key < opt.nkeys && now >= opt.key_start + next_key * opt.key_interval) {
-            int k = opt.keys[next_key++];
-            key_down(k, 1);
-            if (k >= 0 && k < 32)
-                g_hold_until[k] = now + (opt.key_hold ? opt.key_hold : 1);
+            int k = opt.keys[next_key], r = opt.remotes[next_key];
+            next_key++;
+            key_down(k, r);
+            if (k >= 0 && k < 32 && r >= 1 && r <= 6)
+                g_hold_until[r][k] = now + (opt.key_hold ? opt.key_hold : 1);
         }
         repeat_held(opt.ir_repeat);
         if (opt.exit_after && now >= opt.exit_after) {
