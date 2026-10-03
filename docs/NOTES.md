@@ -95,11 +95,19 @@ matching `.dat` holds metrics (format TBD).
   API usage by `tools/zbcapi.py`.
 - Lua library tables (name -> C address) for the engine: `docs/engine_api_tables.txt`.
 
+### Discs seen
+- Sudoku, Gemz: engine platform 0.11.3.68fbbs (md5 71ef9287...).
+- Lock 5: `appname=wilds`, engine 0.11.3.65nhfs (older build, md5 b2323224...). A
+  Yahtzee-style game on five reels; the script's main table is `WildSevens` (working title,
+  log lines `WildSevens.Unload...`), sources `ws_*.zsc`, `wild_sevens.zsc`. No saves.
+
 ### Engine API semantics (verified in engine code or by script usage)
 - Key codes (script constants): 0-9 digits, 10 UP, 11 DOWN, 12 RIGHT, 13 LEFT,
   14 SELECT, 15 DVD_MENU, 16-19 A-D, 20 GAME_MENU, 255 NO_KEY. Remotes 1-6 = red,
   yellow, blue, green, purple, orange.
-- `input.GetKey()` -> key_id, remote_id, timestamp.
+- `input.GetKey()` -> key_id, remote_id, timestamp (core 0x8060fee0, 5 input modes via a
+  jump table). With no key it returns the constant event at 0x8073550c: **key 255, remote
+  255, time 0**; Lock 5 tests `remote < NO_KEY` to detect a key, so remote must be 255.
 - `movie.GetState()` -> **0 when finished** (wiki says the opposite); scripts poll it.
 - `gl.SetParameters(ovl, x, y, z, visible)` (core 0x80615228: overlay+0x34 pos,
   +0x44 z, +0x48 visible; `SetVisibility` writes the same +0x48), marks dirty rects.

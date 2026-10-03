@@ -26,7 +26,9 @@ static int in_getkey(lua_State *L)
     rt_check_quit(L);
     if (!input_pop(&key, &remote, &ts)) {
         SDL_Delay(1);    /* scripts busy-poll; don't spin a core */
-        return push_key(L, KEY_NONE, 0, rt_now_ms());
+        /* engine's empty event (0x8073550c): key and remote 0xff, time 0. Lock 5 tests
+         * remote < NO_KEY to see whether a key came in. */
+        return push_key(L, KEY_NONE, KEY_NONE, 0);
     }
     return push_key(L, key, remote, ts);
 }
