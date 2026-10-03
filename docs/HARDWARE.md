@@ -80,3 +80,23 @@ Nucleus PLUS RTOS; apps/dvdnav (DvdMenu*, eeprom_mgr.c, spi_eeprom.c, Infofile.c
 PanteraSetupProperty.c), app_main/app_file/app_iframe/app_alloc/app_message, asp.c +
 AudioDriver/LoadDecoder/Wma/Mlp (maui DSP), spu, osd ("zapgl vsync", "OSD Physical Vsync"),
 atapi_imp/_atapi_cmd, udf_pars, dvd_nav/dvd_pres/vcd_*, cir (IR), uart0/uart1, macrovision.
+
+## Historical sources
+
+Nytric's own project page (nytric.com, ZAPiT Games section, still online with a 2024
+copyright) describes what Nytric built for ZAPiT [I, first-hand claims, not verified]:
+
+- the console itself "from concept through design to manufacturing", with National
+  Semiconductor and Panasonic as technology partners, extending DVD player technology with
+  up to six hand-held TV-type remote controls;
+- a proprietary FPGA architecture, PCBs, plastics and tooling, regulatory testing;
+- "a unique Real-Time Operating System (RTOS)", the game engines and software libraries,
+  and the content and code of the launch titles (more than ten titles);
+- the ZAPiT SDK: in essence a proprietary emulator for the Game Wave - a custom PC with a
+  PCI emulator board (5 V FPGA translated to 3.3 V) - plus compiler tool chains.
+
+Against our analysis: the firmware and the engine are built on **Nucleus PLUS** (strings
+and port "IDT305xIG" above), so the "unique RTOS" is at most a layer over Nucleus, or
+marketing wording. The SDK's compiler tool chains fit the chunk name `=(zap compiler)` of
+every game script. Which part the FPGA plays (the six-remote IR decoder is a candidate) is
+open.
