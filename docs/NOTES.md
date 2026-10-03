@@ -103,8 +103,9 @@ matching `.dat` holds metrics (format TBD).
 - Letter Zap: engine 0.11.3.59 (oldest so far, md5 d9952fe9...). Cube (4x4 Boggle; boards
   from `tag.mtx` records such as `sndeelidfetebars`) and Tag!; `data_xx/` per language
   (dic38.zdt, lfreq.dat letter pool, tag.mtx); saves under "LETTER ZAP".
-- 4 Degrees: The Arc of Trivia - Bible Edition: engine **1.01.3**.5bpa1s (first 1.x build
-  seen, md5 666674c7...), same .zbc format and API. One MPEG movie per question in six
+- 4 Degrees: The Arc of Trivia - Bible Edition: engine 1.01.3.5bpa1s (md5 666674c7...),
+  same .zbc format and API. Despite the number it is *older* than the 0.11.3 engines
+  (built 2005-11-25, see "Build stamps"). One MPEG movie per question in six
   category folders (`01_O_T_People/01_01_D_Japheth.mpg`...). Saves under "4 DEGREES BIBLE".
   The letter in the movie name is the correct answer; the script's question table holds
   `{0, answer_index (A=0), 415, movie, answer}` (main/22).
@@ -112,6 +113,26 @@ matching `.dat` holds metrics (format TBD).
   (bumper movie). Minigames (Bingo...) call `iframe.ShowPredefined(2)` before each one.
   Saves under "VeggieTales2007".
 - Studio: Nytric (logo movie) made Gemz, Lock 5, Letter Zap and 4 Degrees.
+- Quiz Konnect (late Indian release, not in Redump; file dump shared on Reddit by
+  u/Amasteriscool): `appname=Four_Degrees`, a 4 Degrees reworked with Indian and
+  international questions (`01_Arts/01_AmitabhBachchan_A.mpg`...). Script build stamp
+  2008-11-02 12:24:43 on host `NATIONAL`, while the .diz still carries the 2006 build
+  `1.00.669c8s` of the base game; engine 0.11.3.669das (2006-06-09, md5 d0673661...);
+  movie file dates 2008-12..2009-04. Nytric logo but no ZAPiT logo at boot. No demo
+  limits or "demo" strings in the script (the case reportedly says "Demo Game Not For
+  Resale"). Dump check: all 127 zlib assets inflate cleanly and all 329 MPEG files decode
+  without errors (FFmpeg). Archive checked: `Quiz Konnect.zip`, 509 files, SHA-1
+  8bb854630f336dd8c608b4c6cf7510ff3470abe2, MD5 501581b32467a0c5763385f0edf7c7a7.
+
+### Build stamps (version suffixes)
+The last part of a version string (`68fbbs`, `5asf0s`...) is the build time in base 36
+(`0-9a-z`): year-2000, month, day, hour, minutes/2, then the first letter of the build
+host, lowercased (4 Degrees script `Game_BuildNumber`, globals `version_date_*`,
+`version_host_name`). Checked: 4 Degrees Bible's script holds 2005-10-28 15:00:37 host
+`SSIMEN` = `5asf0s`, its .diz version; the Sudoku engine `68fbbs` = 2006-08-15 11:22
+matches its file date. Engines: 59uc7s 2005-09-30 (Letter Zap), 5bpa1s 2005-11-25
+(4 Degrees Bible, "1.01.3"), 65nhfs 2006-05-23 (Lock 5), 669das 2006-06-09 (Quiz
+Konnect), 68fbbs 2006-08-15 (Sudoku, Gemz, VeggieTales).
 
 ### Engine API semantics (verified in engine code or by script usage)
 - Key codes (script constants): 0-9 digits, 10 UP, 11 DOWN, 12 RIGHT, 13 LEFT,

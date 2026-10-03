@@ -19,13 +19,14 @@ PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 | Letter Zap! | Cube playable (word dictionary, scoring); Tag! untested |
 | 4 Degrees: Bible Edition | Playable (menus, question movies, answering) |
 | VeggieTales: Veg-Out! Family Tournament | Playable (menus, minigames such as Bingo, multiplayer) |
+| Quiz Konnect | Playable (late Indian release of 4 Degrees, not in Redump; see Credits) |
 
 Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
 alpha and animations, text with the disc fonts, sound effects, remote control input,
 disc file access, reading discs directly from `.iso` images, save games.
 
 Not yet: parabola/blinking animations, deinterlacing. Other titles of the
-16-disc library are untested.
+16-disc Redump set are untested.
 
 ## Legal
 
@@ -83,6 +84,9 @@ when stopped), `--keys 14,14 --key-start 4000 --key-interval 1500` (scripted inp
 
 Built on the format research of the [GameWaveFans](https://github.com/gamewavefans/GameWaveFans)
 project. See `THIRD_PARTY_NOTICES.md` for licenses.
+
+Thanks to Reddit user u/Amasteriscool for sharing the dump of Quiz Konnect, a late title
+that is not in the Redump set; its provenance and integrity checks are in `docs/NOTES.md`.
 
 ## License
 
