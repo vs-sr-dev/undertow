@@ -173,6 +173,16 @@ Konnect), 68fbbs 2006-08-15 (Sudoku, Gemz, VeggieTales).
 - `input.GetKey()` -> key_id, remote_id, timestamp (core 0x8060fee0, 5 input modes via a
   jump table). With no key it returns the constant event at 0x8073550c: **key 255, remote
   255, time 0**; Lock 5 tests `remote < NO_KEY` to detect a key, so remote must be 255.
+  - Modes (`input.SetMode`, 0x8060f920, clears the slots; default 0): 0 = one slot per remote,
+    only the round-robin remote (index advanced after every GetKey) is checked; 1 = mode 0 or
+    a random key from `SetRandomKeysTable` (auto test); 2 = random only; 3 = scan all six
+    slots from the round-robin index; 4 = per-remote FIFO of `SetQueueSize` (default 4)
+    entries. A slot keeps the first unread press. All shipped games use mode 0.
+  - The IR code is decoded by an external chip: the engine reads a 5-bit key and 3-bit remote
+    (1-6) on GPIO with a strobe interrupt (0x80623afc). There is **no key-up event, no held
+    state and no software repeat**; whether a held button re-strobes is up to the decoder
+    (unknown). The timestamp is the Nucleus tick (same clock as `time.GetRealTime`).
+  - `EnableRemotes`/`DisableRemotes` return 0 / -1 (failure); Undertow returns 1.
 - `movie.GetState()` -> **0 when finished** (wiki says the opposite); scripts poll it.
 - `gl.SetParameters(ovl, x, y, z, visible)` (core 0x80615228: overlay+0x34 pos,
   +0x44 z, +0x48 visible; `SetVisibility` writes the same +0x48), marks dirty rects.
