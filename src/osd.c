@@ -436,6 +436,8 @@ void osd_video_set(const uint8_t *y, int ystride, const uint8_t *u, const uint8_
     SDL_LockMutex(rt_lock);
     if (w != g_vw || h != g_vh) {
         free(g_vy);
+        free(g_vu);
+        free(g_vv);
         g_vy = malloc((size_t)w * h);
         g_vu = malloc((size_t)cw * ch);
         g_vv = malloc((size_t)cw * ch);
