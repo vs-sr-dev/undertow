@@ -112,8 +112,8 @@ static int fn_free(lua_State *L)
     return 0;
 }
 
-/* The engine binary on the disc carries a built-in font in its file table. */
-static const uint8_t *cheese_find(const uint8_t *d, size_t n, const char *name, size_t *size)
+/* The engine binary on the disc carries a file table (built-in font, predefined stills). */
+const uint8_t *cheese_find(const uint8_t *d, size_t n, const char *name, size_t *size)
 {
     static const uint8_t magic[8] = {0x12, 0x34, 0x56, 0x78, 0x87, 0x65, 0x43, 0x21};
     size_t base, p;

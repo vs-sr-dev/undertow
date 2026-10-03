@@ -458,9 +458,28 @@ static int if_show(lua_State *L)
     return 0;
 }
 
+/* ShowPredefined(n): the engine sets up 4 predefined stills at boot (0x8060c3c0):
+ * 0 launching.m2v and 1 insert_disc.m2v from its file table (solid black if missing),
+ * 2 solid black (Y 16, Cb/Cr 128), 3 another kind, not understood (black here). */
 static int if_showpredefined(lua_State *L)
 {
-    rt_trace_call(L, "iframe.ShowPredefined");   /* TODO: engine built-in stills */
+    static const char *const names[] = {"launching.m2v", "insert_disc.m2v"};
+    int n = luaL_checkint(L, 1);
+    rt_trace_call(L, "iframe.ShowPredefined");
+    if (n >= 0 && n < 2) {
+        size_t size, len;
+        unsigned char *eng = vfs_read_all(rt_engine_path, &size);
+        const unsigned char *m2v = eng ? cheese_find(eng, size, names[n], &len) : NULL;
+        YuvImage img;
+        if (m2v && video_decode_still(m2v, len, &img) == 0) {
+            osd_video_set(img.y, img.w, img.u, img.v, (img.w + 1) / 2, img.w, img.h);
+            video_free_image(&img);
+            free(eng);
+            return 0;
+        }
+        free(eng);
+    }
+    osd_video_clear();
     return 0;
 }
 

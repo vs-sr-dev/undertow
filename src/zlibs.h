@@ -17,6 +17,10 @@ void libdata_open(lua_State *L);  /* pointer, zfile */
 void libeeprom_open(lua_State *L); /* eeprom */
 void libdict_open(lua_State *L);  /* dict */
 
+/* Entry `name` of the file table in an engine binary d[0..n), lib_text.c */
+const unsigned char *cheese_find(const unsigned char *d, size_t n, const char *name,
+                                 size_t *size);
+
 /* "<resource dir>/<name>" for a handle from rm.OpenResource, lib_gl.c */
 void rm_join_path(char *out, size_t size, int res, const char *name);
 

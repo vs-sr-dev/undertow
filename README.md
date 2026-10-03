@@ -18,13 +18,13 @@ PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 | Lock 5 | Playable (menus, player join, name entry, spinning and locking reels) |
 | Letter Zap! | Cube playable (word dictionary, scoring); Tag! untested |
 | 4 Degrees: Bible Edition | Playable (menus, question movies, answering) |
+| VeggieTales: Veg-Out! Family Tournament | Playable (menus, minigames such as Bingo; single remote only) |
 
 Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
 alpha and animations, text with the disc fonts, sound effects, remote control input,
 disc file access, reading discs directly from `.iso` images, save games.
 
-Not yet: parabola/blinking animations, deinterlacing, engine
-built-in screens (`iframe.ShowPredefined`), multiple remotes. Other titles of the
+Not yet: parabola/blinking animations, deinterlacing, multiple remotes. Other titles of the
 16-disc library are untested.
 
 ## Legal

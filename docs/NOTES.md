@@ -108,6 +108,9 @@ matching `.dat` holds metrics (format TBD).
   category folders (`01_O_T_People/01_01_D_Japheth.mpg`...). Saves under "4 DEGREES BIBLE".
   The letter in the movie name is the correct answer; the script's question table holds
   `{0, answer_index (A=0), 415, movie, answer}` (main/22).
+- VeggieTales: Veg-Out! Family Tournament: engine 0.11.3.68 (same as Sudoku), by Big Idea
+  (bumper movie). Minigames (Bingo...) call `iframe.ShowPredefined(2)` before each one.
+  Saves under "VeggieTales2007".
 - Studio: Nytric (logo movie) made Gemz, Lock 5, Letter Zap and 4 Degrees.
 
 ### Engine API semantics (verified in engine code or by script usage)
@@ -140,6 +143,10 @@ matching `.dat` holds metrics (format TBD).
 - `BlitOverlayWithCR(src, dst, x, y [, ?, blend, flag, Y1,Cb1,Cr1,A1, Y2,Cb2,Cr2,A2])`
   (binding 0x80625f60): same core 0x80613c44 as BlitOverlay, plus two packed colours
   (0x80612860) for a colour replacement. Letter Zap passes only 6 args.
+- `iframe.ShowPredefined(n)`: the engine builds a 4-entry predefined still table at boot
+  (0x8060c3c0, count byte set to 4 at 0x8060c654): 0 `launching.m2v`, 1 `insert_disc.m2v`
+  (from its file table; solid black if missing), 2 solid black (Y 16, Cb/Cr 128),
+  3 another kind (not understood). Core 0x8060e960 ignores n >= count.
 - `dict.Load(res, name) -> handle` (light userdata, NULL on failure), `dict.Lookup(handle,
   word) -> boolean`, `dict.Unload(handle)`; see "Dictionary .zdt".
 - Text: `text.Render(str, font, w, h, halign, valign, line_spacing, char_spacing, ?, tint,
