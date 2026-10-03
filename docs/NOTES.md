@@ -129,13 +129,20 @@ matching `.dat` holds metrics (format TBD).
   4 Degrees Bible. No saves. Hides the OSD with `gl.Show(0)` while the full-screen deck
   shuffle movie plays, `gl.Show(1)` after.
 
+- Rewind: trivia (Nytric), game build `5a5eir` (2005-10-05), the oldest engine seen:
+  0.09.3.58.id4s (its suffix does not follow the later build-stamp format; the board "a"
+  engine 0.09.a.58gans = 2005-08-16). The .diz lists two `[platform]` sections (board 3 and
+  board a); Undertow keeps the board 3 one. 280 regular, 56 true-or-false and 28 "news or
+  not" questions. Same quiz mechanics as 4 Degrees and Quiz Konnect (four options, timer,
+  hints, wrong answers removed): the ancestor of that family.
+
 ### Build stamps (version suffixes)
 The last part of a version string (`68fbbs`, `5asf0s`...) is the build time in base 36
 (`0-9a-z`): year-2000, month, day, hour, minutes/2, then the first letter of the build
 host, lowercased (4 Degrees script `Game_BuildNumber`, globals `version_date_*`,
 `version_host_name`). Checked: 4 Degrees Bible's script holds 2005-10-28 15:00:37 host
 `SSIMEN` = `5asf0s`, its .diz version; the Sudoku engine `68fbbs` = 2006-08-15 11:22
-matches its file date. Engines: 59uc7s 2005-09-30 (Letter Zap), 5bpa1s 2005-11-25
+matches its file date. Engines: 58gans 2005-08-16 (Rewind, board a), 59uc7s 2005-09-30 (Letter Zap), 5bpa1s 2005-11-25
 (4 Degrees Bible, "1.01.3"), 65nhfs 2006-05-23 (Lock 5), 669das 2006-06-09 (Quiz
 Konnect), 68fbbs 2006-08-15 (Sudoku, Gemz, VeggieTales).
 
