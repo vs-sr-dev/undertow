@@ -335,6 +335,17 @@ static int gl_blitoverlay(lua_State *L)
     return 0;
 }
 
+/* BlitOverlayWithCR(src, dst, x, y [, ?, blend, flag, Y1, Cb1, Cr1, A1, Y2, Cb2, Cr2, A2]):
+ * same core as BlitOverlay (0x80613c44) plus a colour replacement (binding 0x80625f60 packs
+ * the two colours). Letter Zap passes no colours; replacement is not implemented. */
+static int gl_blitoverlaywithcr(lua_State *L)
+{
+    rt_trace_call(L, "gl.BlitOverlayWithCR");
+    if (lua_gettop(L) > 7)
+        fprintf(stderr, "gl.BlitOverlayWithCR: colour replacement not implemented\n");
+    return gl_blitoverlay(L);
+}
+
 /* Not understood yet: traced so they can be studied. */
 static int gl_traced_nop(lua_State *L)
 {
@@ -364,11 +375,11 @@ static const luaL_reg gl_lib[] = {
     {"AddAlphaAnimation", gl_addalphaanimation},
     {"AddVisibilityAnimation", gl_addvisibilityanimation},
     {"CreateTextureAnimation", gl_createtextureanimation}, {"BlitOverlay", gl_blitoverlay},
+    {"BlitOverlayWithCR", gl_blitoverlaywithcr},
     {"SetTextureAlphaLevel", gl_settexturealphalevel}, {NULL, NULL}};
 
 static const char *const gl_unknown_nop[] = {
-    "SetClipInfo", "ClearOSD", "Show", "AddParabolaAnimation", "AddBlinkingAnimation",
-    "BlitOverlayWithCR", NULL};
+    "SetClipInfo", "ClearOSD", "Show", "AddParabolaAnimation", "AddBlinkingAnimation", NULL};
 static const char *const gl_unknown_id[] = {NULL};
 
 static void add_traced(lua_State *L, const char *lib, const char *const *names,

@@ -15,6 +15,10 @@ void libmedia_open(lua_State *L); /* movie, audio */
 void libtext_open(lua_State *L);  /* font, text */
 void libdata_open(lua_State *L);  /* pointer, zfile */
 void libeeprom_open(lua_State *L); /* eeprom */
+void libdict_open(lua_State *L);  /* dict */
+
+/* "<resource dir>/<name>" for a handle from rm.OpenResource, lib_gl.c */
+void rm_join_path(char *out, size_t size, int res, const char *name);
 
 /* pointer buffers (light userdata the scripts pass around), lib_data.c */
 void *data_buffer_new(size_t n);  /* zero-filled; NULL when the table is full */

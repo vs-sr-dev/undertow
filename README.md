@@ -16,6 +16,7 @@ PC with SDL2 and FFmpeg. No firmware or BIOS is needed.
 | Sudoku | Playable (menus, a full board with timer and number entry, save and Load & Resume) |
 | Gemz | Playable (menus, Classic mode board, animations) |
 | Lock 5 | Playable (menus, player join, name entry, spinning and locking reels) |
+| Letter Zap! | Cube playable (word dictionary, scoring); Tag! untested |
 
 Working: MPEG-2 movies with sound, MPEG stills, OSD textures/overlays with z-order,
 alpha and animations, text with the disc fonts, sound effects, remote control input,

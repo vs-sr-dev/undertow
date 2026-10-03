@@ -76,8 +76,6 @@ static const StubFn exp_int_fns[] = {
     {"Configure", R_ZERO}, {"Close", R_ZERO}, {"Test", R_ZERO}, {NULL, 0}};
 static const StubFn uart_fns[] = {
     {"RxD", R_ZERO}, {"TxD", R_ZERO}, {"Open", R_ONE}, {"Close", R_ONE}, {NULL, 0}};
-static const StubFn dict_fns[] = {
-    {"Load", R_ID}, {"Unload", R_NONE}, {"Lookup", R_ZERO}, {NULL, 0}};
 
 /* ---- bit: 32-bit operations on integer lua_Number ---------------------------------- */
 
@@ -188,10 +186,10 @@ void zlibs_open(lua_State *L)
     libtext_open(L);
     libdata_open(L);
     libeeprom_open(L);
+    libdict_open(L);
 
     open_stubs(L, "engine", engine_fns);
     open_stubs(L, "spi", spi_fns);
     open_stubs(L, "uart", uart_fns);
-    open_stubs(L, "dict", dict_fns);
     open_stubs(L, "exp_int", exp_int_fns);
 }

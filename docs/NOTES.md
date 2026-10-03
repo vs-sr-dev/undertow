@@ -100,6 +100,9 @@ matching `.dat` holds metrics (format TBD).
 - Lock 5: `appname=wilds`, engine 0.11.3.65nhfs (older build, md5 b2323224...). A
   Yahtzee-style game on five reels; the script's main table is `WildSevens` (working title,
   log lines `WildSevens.Unload...`), sources `ws_*.zsc`, `wild_sevens.zsc`. No saves.
+- Letter Zap: engine 0.11.3.59 (oldest so far, md5 d9952fe9...). Cube (4x4 Boggle; boards
+  from `tag.mtx` records such as `sndeelidfetebars`) and Tag!; `data_xx/` per language
+  (dic38.zdt, lfreq.dat letter pool, tag.mtx); saves under "LETTER ZAP".
 
 ### Engine API semantics (verified in engine code or by script usage)
 - Key codes (script constants): 0-9 digits, 10 UP, 11 DOWN, 12 RIGHT, 13 LEFT,
@@ -128,6 +131,11 @@ matching `.dat` holds metrics (format TBD).
 - `BlitOverlay(src_ovl, dst_ovl, x, y [, ?, blend])` draws src into dst's texture and
   **copies pixels by default** (Gemz clears board cells by blitting an empty overlay;
   blending left stale gems under new ones, confirmed by playtest). Arg 6 = 1 assumed blend.
+- `BlitOverlayWithCR(src, dst, x, y [, ?, blend, flag, Y1,Cb1,Cr1,A1, Y2,Cb2,Cr2,A2])`
+  (binding 0x80625f60): same core 0x80613c44 as BlitOverlay, plus two packed colours
+  (0x80612860) for a colour replacement. Letter Zap passes only 6 args.
+- `dict.Load(res, name) -> handle` (light userdata, NULL on failure), `dict.Lookup(handle,
+  word) -> boolean`, `dict.Unload(handle)`; see "Dictionary .zdt".
 - Text: `text.Render(str, font, w, h, halign, valign, line_spacing, char_spacing, ?, tint,
   Y, Cb, Cr, ?)` (binding 0x80628d4c; args 7/8/9 are signed bytes at +0x16/+0x15/+0x14 of the
   style struct; osd_font.c adds +0x16 to the line height (0x80608890, 0x80608928) and +0x15
@@ -159,6 +167,13 @@ address i*64, whole image read once then written through page by page.
   `CheckFlashIntegrity() -> bad page count`. A delete exists (0x806060f8) but is not exposed.
 - Sudoku: app_id 6902 "SUDOKU01", 4 saves SOLUTION/GUESSES/SCRATCHES/CLOCK (84/44/164/4
   bytes). Gemz: "GEMZ", BACKGROUNDS (4 bytes, saved on level completion) and top scores.
+
+### Dictionary `.zdt` (engine dict core 0x80624a64.., implemented in `src/lib_dict.c`)
+8-byte header (`01 01 00..`, unused) then a plain trie: node = u8 edge count + edges;
+edge = byte (bits0-4 letter code, char = code|0x60; bit5 end of word; bits6-7 K) + K-byte
+LE offset of the child node from the start of the parent node. Lookup scans edges
+linearly (the Latin list is unsorted), exact and case-sensitive; "" is found. Letter Zap
+ships accent-stripped lists for en/fr/it/lat/pt/ro (16k-80k words, 3-8 letters; ro 2-16).
 
 ### Font `.dat` (verified on all fonts of both discs)
 5 x char[128] (face, family, charset, style, atlas .zbm name), then at 0x280:
