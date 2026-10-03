@@ -39,3 +39,4 @@ target_compile_options(undertow PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno
 # --- zbcc: Lua source -> ZAPiT .zbc (homebrew discs)
 add_executable(zbcc tools/zbcc.c)
 target_link_libraries(zbcc PRIVATE lua50 ZLIB::ZLIB)
+target_include_directories(zbcc PRIVATE ${LUA_DIR}/src)   # internals for the main chunk
