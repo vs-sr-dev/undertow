@@ -1,8 +1,8 @@
 /* Lua libraries: font, text. A text object is a texture with the rendered string plus an
  * (initially hidden) overlay; scripts position it via text.GetOverlayId + gl.SetParameters.
  *
- * text.Render(str, font, w, h [, halign, valign, char_spacing, line_spacing, ?, tint,
- *             Y, Cb, Cr, ?]) - argument meanings partly inferred (see docs/NOTES.md);
+ * text.Render(str, font, w, h [, halign, valign, line_spacing, char_spacing, ?, tint,
+ *             Y, Cb, Cr, ?]) - see docs/NOTES.md (spacings from apps/zit/osd_font.c);
  * colours are YCbCr (128,128 = neutral chroma). text.RenderSimple(font, str) sizes the
  * texture to the string. */
 #include <stdio.h>
@@ -217,8 +217,8 @@ static int tx_render(lua_State *L)
     }
     st.halign = luaL_optint(L, 5, 0);
     st.valign = luaL_optint(L, 6, 0);
-    st.char_spacing = (signed char)luaL_optint(L, 7, 0);
-    st.line_spacing = (signed char)luaL_optint(L, 8, 0);
+    st.line_spacing = (signed char)luaL_optint(L, 7, 0);   /* engine adds it to the line height */
+    st.char_spacing = (signed char)luaL_optint(L, 8, 0);   /* and this to each glyph advance */
     st.tint = luaL_optint(L, 10, 0) != 0;
     {
         int y = luaL_optint(L, 11, 235), cb = luaL_optint(L, 12, 128) - 128,

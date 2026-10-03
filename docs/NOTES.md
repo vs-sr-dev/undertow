@@ -128,8 +128,12 @@ matching `.dat` holds metrics (format TBD).
 - `BlitOverlay(src_ovl, dst_ovl, x, y [, ?, blend])` draws src into dst's texture and
   **copies pixels by default** (Gemz clears board cells by blitting an empty overlay;
   blending left stale gems under new ones, confirmed by playtest). Arg 6 = 1 assumed blend.
-- Text: `text.Render(str, font, w, h, halign, valign, char_spacing, line_spacing, ?, tint,
-  Y, Cb, Cr, ?)` (meanings after w,h inferred; colours YCbCr), `RenderSimple(font, str)`;
+- Text: `text.Render(str, font, w, h, halign, valign, line_spacing, char_spacing, ?, tint,
+  Y, Cb, Cr, ?)` (binding 0x80628d4c; args 7/8/9 are signed bytes at +0x16/+0x15/+0x14 of the
+  style struct; osd_font.c adds +0x16 to the line height (0x80608890, 0x80608928) and +0x15
+  to each glyph advance (0x80608abc); arg 9 goes to line splitting 0x80607c90, unknown;
+  colours YCbCr). Scripts pass negative line spacing (Sudoku "TYPICAL" -6, Letter Zap word
+  list -4): read as char spacing it squashed the letters, `RenderSimple(font, str)`;
   `GetOverlayId(tid)` -> hidden overlay the script positions.
 
 ### Save EEPROM (engine `apps/zit/eeprom_mgr.c` 0x80604000.., Lua `zlua_eeprom.c` 0x806295f4..)
