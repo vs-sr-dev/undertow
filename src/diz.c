@@ -19,12 +19,27 @@ static void copy_trim(char *dst, size_t dstsize, const char *s, size_t n)
     dst[n] = 0;
 }
 
+/* A disc may list several [platform] sections (Rewind: board 3 and board a); keep the
+ * board 3 one (the Game Wave), else the first. */
+static void commit_platform(Diz *out, const Diz *p, int *have)
+{
+    if (!p->engine[0] || (*have && (out->board == 3 || p->board != 3)))
+        return;
+    snprintf(out->engine, sizeof(out->engine), "%s", p->engine);
+    snprintf(out->engine_version, sizeof(out->engine_version), "%s", p->engine_version);
+    out->board = p->board;
+    *have = 1;
+}
+
 int diz_parse(const char *text, Diz *out)
 {
     char section[32] = "", key[64], val[256];
     const char *line = text;
+    Diz plat;
+    int have = 0;
 
     memset(out, 0, sizeof(*out));
+    memset(&plat, 0, sizeof(plat));
     while (*line) {
         const char *end = strchr(line, '\n');
         size_t len = end ? (size_t)(end - line) : strlen(line);
@@ -32,6 +47,8 @@ int diz_parse(const char *text, Diz *out)
 
         if (len && line[0] == '[') {
             const char *close = memchr(line, ']', len);
+            commit_platform(out, &plat, &have);
+            memset(&plat, 0, sizeof(plat));
             if (close)
                 copy_trim(section, sizeof(section), line + 1, (size_t)(close - line - 1));
         } else if (eq) {
@@ -42,12 +59,13 @@ int diz_parse(const char *text, Diz *out)
                 else if (!strcasecmp(key, "appfile")) snprintf(out->appfile, sizeof(out->appfile), "%s", val);
                 else if (!strcasecmp(key, "version")) snprintf(out->version, sizeof(out->version), "%s", val);
             } else if (!strcasecmp(section, "platform")) {
-                if (!strcasecmp(key, "engine")) snprintf(out->engine, sizeof(out->engine), "%s", val);
-                else if (!strcasecmp(key, "version")) snprintf(out->engine_version, sizeof(out->engine_version), "%s", val);
-                else if (!strcasecmp(key, "board")) out->board = atoi(val);
+                if (!strcasecmp(key, "engine")) snprintf(plat.engine, sizeof(plat.engine), "%s", val);
+                else if (!strcasecmp(key, "version")) snprintf(plat.engine_version, sizeof(plat.engine_version), "%s", val);
+                else if (!strcasecmp(key, "board")) plat.board = atoi(val);
             }
         }
         line += len + (end ? 1 : 0);
     }
+    commit_platform(out, &plat, &have);
     return out->appfile[0] ? 0 : -1;
 }
