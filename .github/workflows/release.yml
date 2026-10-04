@@ -26,7 +26,7 @@ jobs:
           msystem: MINGW64
           update: true
           install: >-
-            make zip
+            git make zip
             mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
             mingw-w64-x86_64-pkgconf mingw-w64-x86_64-nasm
             mingw-w64-x86_64-SDL2 mingw-w64-x86_64-zlib
