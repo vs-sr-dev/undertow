@@ -13,14 +13,23 @@
   its default configuration. Undertow links it dynamically.
 - **zlib** - zlib license.
 
-### Note on binary packages
+## Bundled in the Windows release zip
+
+- **FFmpeg 8.1.3** (avcodec, avformat, avutil, swresample DLLs) - LGPL-2.1-or-later.
+  A minimal build with no GPL or external components, made by `tools/build_ffmpeg_min.sh`
+  from the unmodified source at https://ffmpeg.org/releases/ffmpeg-8.1.3.tar.xz (the
+  script holds the exact configure line). Undertow links it dynamically, so the DLLs can
+  be replaced with any compatible FFmpeg build.
+- **SDL2** - zlib license. **zlib** - zlib license. **mingw-w64 winpthreads** - MIT.
+
+Their license texts are in the zip's `licenses/` folder.
+
+### Note on local development builds
 
 The MSYS2 `mingw-w64-x86_64-ffmpeg` package is configured with `--enable-gpl
---enable-version3`, so a binary package that bundles those DLLs (as
-`tools/bundle_dlls.sh` does) is covered by the **GPLv3** as a whole. Undertow's own source
-code stays MIT. For LGPL-only binary releases, build against an FFmpeg configured
-without GPL components (Undertow only needs the MPEG-PS demuxer, the MPEG-2 video and
-MP2 audio decoders, and libswresample).
+--enable-version3`, so a package that bundles those DLLs (as `tools/bundle_dlls.sh`
+does) is covered by the **GPLv3** as a whole. Undertow's own source code stays MIT.
+Release zips use the minimal LGPL build above instead.
 
 ## Research references
 

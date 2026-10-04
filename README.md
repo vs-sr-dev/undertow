@@ -36,6 +36,13 @@ Not yet: parabola/blinking animations, deinterlacing. Other titles of the
 This repository contains **no** Game Wave firmware, game code or assets. You need your
 own disc images. Undertow is an independent project, not affiliated with ZAPiT Games.
 
+## Download (Windows)
+
+Prebuilt 64-bit Windows builds are on the
+[Releases](https://github.com/vs-sr-dev/undertow/releases) page: unzip anywhere and drag
+a disc image onto `undertow.exe`. The executable is not code-signed, so Windows
+SmartScreen may warn about an unrecognized app ("More info" -> "Run anyway").
+
 ## Build (Windows, MSYS2 mingw64)
 
 Packages: `mingw-w64-x86_64-gcc`, `-cmake`, `-ninja`, `-SDL2`, `-ffmpeg`, `-zlib`.
@@ -44,6 +51,11 @@ Packages: `mingw-w64-x86_64-gcc`, `-cmake`, `-ninja`, `-SDL2`, `-ffmpeg`, `-zlib
     cmake -S . -B build -G Ninja
     cmake --build build
     sh tools/bundle_dlls.sh          # copy the needed DLLs next to build/undertow.exe
+
+Release zip: `sh tools/build_ffmpeg_min.sh` (once; a small LGPL FFmpeg with only the
+MPEG decoders, needs `-nasm` and `make`), then `sh tools/package_release.sh` writes
+`dist/undertow-<version>-win64.zip`. Pushing a `v*` tag does the same on GitHub Actions
+and opens a draft release.
 
 The code is portable C99 + SDL2 + FFmpeg; other platforms should only need build tweaks.
 

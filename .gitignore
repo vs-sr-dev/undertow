@@ -14,3 +14,8 @@ third_party/*.tar.gz
 # Python
 __pycache__/
 *.pyc
+
+# Release builds (tools/build_ffmpeg_min.sh, tools/package_release.sh)
+deps/
+build-release/
+dist/

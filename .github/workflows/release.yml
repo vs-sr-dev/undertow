@@ -1,0 +1,54 @@
+# Windows release zip: on a v* tag it becomes a draft GitHub release (review, then publish);
+# a manual run just leaves the zip as a workflow artifact.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            make zip
+            mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-SDL2 mingw-w64-x86_64-zlib
+
+      - uses: actions/cache@v4
+        with:
+          path: deps/ffmpeg-min
+          key: ffmpeg-min-${{ hashFiles('tools/build_ffmpeg_min.sh') }}
+
+      - name: Minimal LGPL FFmpeg
+        run: '[ -f deps/ffmpeg-min/lib/pkgconfig/libavcodec.pc ] || sh tools/build_ffmpeg_min.sh'
+
+      - name: Build and package
+        run: sh tools/package_release.sh "${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: undertow-win64
+          path: dist/*.zip
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: true
+          files: dist/*.zip
