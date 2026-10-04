@@ -230,10 +230,8 @@ Konnect), 68fbbs 2006-08-15 (Sudoku, Gemz, VeggieTales).
   0x80608abc), char spacing between glyphs of a word (0x80607dd4). Static scan of all
   discs: arg 8 is always 0, arg 9 is 0/1/2 (Gemz names, Letter Zap, Lock 5, Zap 21,
   VeggieTales). Arg 14 draws a 1-pixel debug outline round the texture. Colours YCbCr.
-  - Layout: paragraphs split with `strtok(s, "
-")` (0x80608220), words with
-    `strtok(p, " 	
-")` (0x8060808c): runs collapse and empty lines vanish; spaces are
+  - Layout: paragraphs split with `strtok(s, "\n\r")` (0x80608220), words with
+    `strtok(p, " \t\n\r")` (0x8060808c): runs collapse and empty lines vanish; spaces are
     never drawn. Greedy wrap at word boundaries only (new line when line + gap + word > w,
     0x80608538); a word is never broken (it is clipped). No fixed limits: string, words and
     lines live in heap vectors; anything outside the texture is clipped.
